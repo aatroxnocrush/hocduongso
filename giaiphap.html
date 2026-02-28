@@ -1,0 +1,474 @@
+﻿<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Giải Pháp & Phương Pháp Tự Học — AITECH</title>
+    <meta name="description"
+        content="Cẩm nang giải pháp và phương pháp tự học có cơ sở khoa học dành cho học sinh THPT Việt Nam.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="aitech.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class', theme: {
+                extend: {
+                    fontFamily: { sans: ['Quicksand', 'sans-serif'] },
+                    colors: { 'ns-purple': '#7c5cfc', 'ns-purple-light': '#a78bfa', 'ns-purple-soft': '#ede9fe', 'dark-text': '#5A4A4A' },
+                    animation: { 'float': 'ns-float 6s ease-in-out infinite' },
+                    keyframes: { 'ns-float': { '0%,100%': { transform: 'translateY(0) rotate(0)' }, '50%': { transform: 'translateY(-18px) rotate(1.5deg)' } } }
+                }
+            }
+        }
+    </script>
+    <style>
+        .method-card.hidden-method {
+            display: none
+        }
+    </style>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="aitech.js"></script>
+</head>
+
+<body class="relative min-h-screen pb-20 font-sans text-dark-text dark:text-gray-100">
+
+    <div class="blob bg-green-100 w-[500px] h-[500px] rounded-full top-[-100px] right-[-150px] animate-float"></div>
+    <div class="blob bg-purple-100 w-[400px] h-[400px] rounded-full bottom-20 left-[-100px]"></div>
+
+    <!-- Theme Toggle -->
+    <button onclick="toggleTheme()"
+        class="fixed bottom-8 right-8 z-[60] bg-white dark:bg-slate-800 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-yellow-500 border-4 border-white dark:border-slate-700 hover:scale-110 transition-all">
+        <i class="ph-fill ph-sun text-2xl dark:hidden"></i>
+        <i class="ph-fill ph-moon text-2xl text-blue-300 hidden dark:block"></i>
+    </button>
+
+    <!-- Navigation -->
+    <nav class="p-4 sm:p-6 sticky top-0 z-50" id="navbar">
+        <div class="max-w-6xl mx-auto flex justify-between items-center glass-card px-6 py-3 rounded-full">
+            <a href="index.html"
+                class="flex items-center gap-2 text-gray-500 dark:text-gray-300 hover:text-ns-purple transition-colors font-bold group">
+                <i class="ph-bold ph-arrow-left group-hover:-translate-x-1 transition-transform"></i> Trang chủ
+            </a>
+            <div class="font-bold text-lg text-ns-purple flex items-center gap-2">
+                <i class="ph-fill ph-lightbulb"></i>
+                <span class="hidden sm:inline">Giải Pháp & Phương Pháp</span>
+            </div>
+            <a href="portal_tai_nguyen.html"
+                class="text-sm font-bold text-gray-500 hover:text-ns-purple transition-colors hidden md:block">Tài
+                nguyên <i class="ph-bold ph-arrow-right"></i></a>
+        </div>
+    </nav>
+
+    <!-- Header -->
+    <header class="text-center px-4 mb-12 mt-8 reveal">
+        <span
+            class="inline-block bg-white dark:bg-slate-800 text-ns-purple text-[10px] font-black px-4 py-1.5 rounded-full shadow-sm mb-4 uppercase tracking-widest border border-ns-purple/10">Nghiên
+            cứu khoa học</span>
+        <h1 class="text-3xl md:text-5xl font-extrabold dark:text-white mb-6 leading-tight">
+            Cẩm Nang <span class="text-ns-purple italic">Tự Học</span><br>Có Cơ Sở Khoa Học
+        </h1>
+        <p class="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto text-lg">
+            Tổng hợp các phương pháp và giải pháp đã được nghiên cứu chứng minh hiệu quả, áp dụng cho bối cảnh THPT Việt
+            Nam.
+        </p>
+    </header>
+
+    <!-- Filter Bar -->
+    <section class="max-w-6xl mx-auto px-4 mb-10 reveal">
+        <div class="glass-card p-4 rounded-2xl flex flex-wrap gap-2 items-center">
+            <span class="text-xs font-black text-gray-500 uppercase tracking-wider mr-2"><i
+                    class="ph-bold ph-funnel mr-1"></i>Lọc:</span>
+            <button onclick="filterMethods('all')"
+                class="filter-btn active bg-ns-purple text-white px-4 py-1.5 rounded-full text-xs font-bold transition-all">Tất
+                cả</button>
+            <button onclick="filterMethods('memory')"
+                class="filter-btn bg-white dark:bg-slate-700 px-4 py-1.5 rounded-full text-xs font-bold hover:bg-ns-purple hover:text-white transition-all">Ghi
+                nhớ</button>
+            <button onclick="filterMethods('planning')"
+                class="filter-btn bg-white dark:bg-slate-700 px-4 py-1.5 rounded-full text-xs font-bold hover:bg-ns-purple hover:text-white transition-all">Kế
+                hoạch</button>
+            <button onclick="filterMethods('thinking')"
+                class="filter-btn bg-white dark:bg-slate-700 px-4 py-1.5 rounded-full text-xs font-bold hover:bg-ns-purple hover:text-white transition-all">Tư
+                duy</button>
+            <button onclick="filterMethods('notetaking')"
+                class="filter-btn bg-white dark:bg-slate-700 px-4 py-1.5 rounded-full text-xs font-bold hover:bg-ns-purple hover:text-white transition-all">Ghi
+                chú</button>
+            <button onclick="filterMethods('wellbeing')"
+                class="filter-btn bg-white dark:bg-slate-700 px-4 py-1.5 rounded-full text-xs font-bold hover:bg-ns-purple hover:text-white transition-all">Sức
+                khỏe</button>
+        </div>
+    </section>
+
+    <!-- Methods Grid -->
+    <main class="max-w-6xl mx-auto px-4 space-y-6" id="methods-container">
+
+        <!-- 1. Active Recall -->
+        <div class="method-card glass-card p-8 md:p-10 rounded-[2.5rem] reveal" data-category="memory">
+            <div class="flex flex-col md:flex-row md:items-center gap-4 mb-6">
+                <div
+                    class="w-14 h-14 bg-purple-100 dark:bg-purple-900/30 rounded-2xl flex items-center justify-center text-ns-purple shadow-inner shrink-0">
+                    <i class="ph-fill ph-brain text-3xl"></i>
+                </div>
+                <div>
+                    <span
+                        class="text-[9px] uppercase font-black text-ns-purple bg-ns-purple/10 px-2 py-0.5 rounded-full">Ghi
+                        nhớ</span>
+                    <h2 class="text-2xl font-bold dark:text-white mt-1">Active Recall <span class="text-ns-purple">(Nhớ
+                            Lại Chủ Động)</span></h2>
+                </div>
+            </div>
+            <div class="text-gray-600 dark:text-gray-300 space-y-3">
+                <p><strong>Nguyên lý:</strong> Tự kiểm tra kiến thức bằng cách gợi nhớ từ bộ nhớ thay vì đọc lại bị
+                    động. Quá trình "gắng nhớ" tạo kết nối thần kinh <strong>mạnh hơn đáng kể</strong> so với đọc đi đọc
+                    lại.</p>
+                <p><strong>Cách áp dụng:</strong></p>
+                <ul class="list-disc list-inside space-y-1 ml-4">
+                    <li>Đọc xong một phần → Gấp sách → Viết lại tất cả những gì nhớ</li>
+                    <li>Dùng flashcard (Anki, Quizlet) — tự hỏi-trả lời</li>
+                    <li>Giảng lại cho bạn bè hoặc tự giảng trước gương</li>
+                </ul>
+                <div class="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-xl mt-4 border-l-4 border-ns-purple text-sm">
+                    <strong>📖 Nguồn:</strong> Karpicke & Roediger (2008) — <em>"The Critical Importance of Retrieval
+                        for Learning"</em>, Science. Nghiên cứu cho thấy sinh viên sử dụng retrieval practice chỉ quên
+                    <strong>13%</strong> trong 2 ngày, so với 56% ở nhóm chỉ đọc lại.
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Spaced Repetition -->
+        <div class="method-card glass-card p-8 md:p-10 rounded-[2.5rem] reveal" data-category="memory">
+            <div class="flex flex-col md:flex-row md:items-center gap-4 mb-6">
+                <div
+                    class="w-14 h-14 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center text-blue-500 shadow-inner shrink-0">
+                    <i class="ph-fill ph-timer text-3xl"></i>
+                </div>
+                <div>
+                    <span
+                        class="text-[9px] uppercase font-black text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded-full">Ghi
+                        nhớ</span>
+                    <h2 class="text-2xl font-bold dark:text-white mt-1">Spaced Repetition <span
+                            class="text-blue-500">(Lặp Lại Ngắt Quãng)</span></h2>
+                </div>
+            </div>
+            <div class="text-gray-600 dark:text-gray-300 space-y-3">
+                <p><strong>Nguyên lý:</strong> Ôn tập lại kiến thức theo khoảng cách thời gian tăng dần: 1 ngày → 3 ngày
+                    → 1 tuần → 2 tuần → 1 tháng. Chống lại <em>đường cong quên lãng</em> (forgetting curve).</p>
+                <p><strong>Cách áp dụng:</strong></p>
+                <ul class="list-disc list-inside space-y-1 ml-4">
+                    <li>Sử dụng ứng dụng Anki — thuật toán tự động tính lịch ôn</li>
+                    <li>Tạo lịch ôn tập cố định trong tuần (VD: Thứ 2 ôn lại bài Thứ 6)</li>
+                    <li>Kết hợp với Active Recall → hiệu quả tối đa</li>
+                </ul>
+                <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl mt-4 border-l-4 border-blue-500 text-sm">
+                    <strong>📖 Nguồn:</strong> Ebbinghaus (1885) — Phát hiện đường cong quên lãng. Cepeda et al. (2006)
+                    — <em>"Distributed Practice in Verbal Recall Tasks"</em>, Psychological Bulletin. Nghiên cứu 2025
+                    cho thấy học sinh dùng spaced repetition đạt điểm cao hơn <strong>tới 37%</strong>.
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Interleaving -->
+        <div class="method-card glass-card p-8 md:p-10 rounded-[2.5rem] reveal" data-category="memory thinking">
+            <div class="flex flex-col md:flex-row md:items-center gap-4 mb-6">
+                <div
+                    class="w-14 h-14 bg-green-100 dark:bg-green-900/30 rounded-2xl flex items-center justify-center text-green-500 shadow-inner shrink-0">
+                    <i class="ph-fill ph-shuffle text-3xl"></i>
+                </div>
+                <div>
+                    <span
+                        class="text-[9px] uppercase font-black text-green-500 bg-green-500/10 px-2 py-0.5 rounded-full">Ghi
+                        nhớ + Tư duy</span>
+                    <h2 class="text-2xl font-bold dark:text-white mt-1">Interleaving <span class="text-green-500">(Xen
+                            Kẽ Chủ Đề)</span></h2>
+                </div>
+            </div>
+            <div class="text-gray-600 dark:text-gray-300 space-y-3">
+                <p><strong>Nguyên lý:</strong> Thay vì học hết chủ đề A rồi mới sang B (blocked practice), hãy xen kẽ: A
+                    → B → A → C. Điều này buộc não phân biệt và so sánh, tăng khả năng áp dụng linh hoạt.</p>
+                <p><strong>Cách áp dụng:</strong> Khi ôn Toán, xen kẽ bài Đại số và Hình học thay vì giải 20 bài cùng
+                    dạng.</p>
+                <div class="bg-green-50 dark:bg-green-900/20 p-4 rounded-xl mt-4 border-l-4 border-green-500 text-sm">
+                    <strong>📖 Nguồn:</strong> Rohrer & Taylor (2007) — <em>"The shuffling of mathematics problems
+                        improves learning"</em>.
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Dual Coding -->
+        <div class="method-card glass-card p-8 md:p-10 rounded-[2.5rem] reveal" data-category="memory notetaking">
+            <div class="flex flex-col md:flex-row md:items-center gap-4 mb-6">
+                <div
+                    class="w-14 h-14 bg-indigo-100 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center text-indigo-500 shadow-inner shrink-0">
+                    <i class="ph-fill ph-image text-3xl"></i>
+                </div>
+                <div>
+                    <span
+                        class="text-[9px] uppercase font-black text-indigo-500 bg-indigo-500/10 px-2 py-0.5 rounded-full">Ghi
+                        nhớ + Ghi chú</span>
+                    <h2 class="text-2xl font-bold dark:text-white mt-1">Dual Coding <span class="text-indigo-500">(Mã
+                            Hóa Kép)</span></h2>
+                </div>
+            </div>
+            <div class="text-gray-600 dark:text-gray-300 space-y-3">
+                <p><strong>Nguyên lý:</strong> Kết hợp văn bản + hình ảnh để tạo hai đường dẫn ghi nhớ trong não (kênh
+                    ngôn ngữ và kênh hình ảnh). Khi cần nhớ, não có 2 cách truy xuất thay vì 1.</p>
+                <p><strong>Cách áp dụng:</strong> Vẽ sơ đồ tư duy, infographic, biểu đồ bên cạnh ghi chú chữ. Dùng màu
+                    sắc và biểu tượng.</p>
+                <div
+                    class="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-xl mt-4 border-l-4 border-indigo-500 text-sm">
+                    <strong>📖 Nguồn:</strong> Paivio (1971) — <em>Dual Coding Theory</em>. Clark & Paivio (1991) —
+                    <em>"Dual coding theory and education"</em>.
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. Elaboration -->
+        <div class="method-card glass-card p-8 md:p-10 rounded-[2.5rem] reveal" data-category="thinking">
+            <div class="flex flex-col md:flex-row md:items-center gap-4 mb-6">
+                <div
+                    class="w-14 h-14 bg-orange-100 dark:bg-orange-900/30 rounded-2xl flex items-center justify-center text-orange-500 shadow-inner shrink-0">
+                    <i class="ph-fill ph-link text-3xl"></i>
+                </div>
+                <div>
+                    <span
+                        class="text-[9px] uppercase font-black text-orange-500 bg-orange-500/10 px-2 py-0.5 rounded-full">Tư
+                        duy</span>
+                    <h2 class="text-2xl font-bold dark:text-white mt-1">Elaboration <span class="text-orange-500">(Tự
+                            Giải Thích Sâu)</span></h2>
+                </div>
+            </div>
+            <div class="text-gray-600 dark:text-gray-300 space-y-3">
+                <p><strong>Nguyên lý:</strong> Luôn tự hỏi "Tại sao?", "Liên quan gì đến cái mình đã biết?". Kết nối
+                    kiến thức mới với kiến thức cũ tạo mạng lưới ghi nhớ phong phú.</p>
+                <p><strong>Cách áp dụng:</strong> Sau mỗi bài học, viết 3 câu hỏi "Tại sao" và tự trả lời. So sánh khái
+                    niệm mới với khái niệm đã học trước đó.</p>
+            </div>
+        </div>
+
+        <!-- 6. Feynman Technique -->
+        <div class="method-card glass-card p-8 md:p-10 rounded-[2.5rem] reveal" data-category="thinking">
+            <div class="flex flex-col md:flex-row md:items-center gap-4 mb-6">
+                <div
+                    class="w-14 h-14 bg-rose-100 dark:bg-rose-900/30 rounded-2xl flex items-center justify-center text-rose-500 shadow-inner shrink-0">
+                    <i class="ph-fill ph-chalkboard-teacher text-3xl"></i>
+                </div>
+                <div>
+                    <span
+                        class="text-[9px] uppercase font-black text-rose-500 bg-rose-500/10 px-2 py-0.5 rounded-full">Tư
+                        duy</span>
+                    <h2 class="text-2xl font-bold dark:text-white mt-1">Feynman Technique <span
+                            class="text-rose-500">(Giảng Dạy Để Hiểu)</span></h2>
+                </div>
+            </div>
+            <div class="text-gray-600 dark:text-gray-300 space-y-3">
+                <p><strong>Nguyên lý:</strong> Giảng lại một chủ đề bằng ngôn ngữ đơn giản — nếu không giải thích được
+                    cho "một em nhỏ" hiểu, tức là bạn chưa thực sự hiểu.</p>
+                <p><strong>4 bước:</strong></p>
+                <ol class="list-decimal list-inside space-y-1 ml-4">
+                    <li>Chọn một khái niệm</li>
+                    <li>Giảng lại bằng lời đơn giản (viết hoặc nói)</li>
+                    <li>Phát hiện chỗ "tắc" → quay lại đọc tài liệu</li>
+                    <li>Đơn giản hóa thêm nữa → lặp lại</li>
+                </ol>
+                <div class="bg-rose-50 dark:bg-rose-900/20 p-4 rounded-xl mt-4 border-l-4 border-rose-500 text-sm">
+                    <strong>📖 Nguồn:</strong> Richard Feynman — Nobel Vật lý 1965. Phương pháp được phổ biến qua nhiều
+                    nghiên cứu về <em>generative learning</em>.
+                </div>
+            </div>
+        </div>
+
+        <!-- 7. SQ3R -->
+        <div class="method-card glass-card p-8 md:p-10 rounded-[2.5rem] reveal" data-category="notetaking thinking">
+            <div class="flex flex-col md:flex-row md:items-center gap-4 mb-6">
+                <div
+                    class="w-14 h-14 bg-teal-100 dark:bg-teal-900/30 rounded-2xl flex items-center justify-center text-teal-500 shadow-inner shrink-0">
+                    <i class="ph-fill ph-book-open text-3xl"></i>
+                </div>
+                <div>
+                    <span
+                        class="text-[9px] uppercase font-black text-teal-500 bg-teal-500/10 px-2 py-0.5 rounded-full">Ghi
+                        chú + Tư duy</span>
+                    <h2 class="text-2xl font-bold dark:text-white mt-1">SQ3R <span class="text-teal-500">(Đọc Sách Hiệu
+                            Quả)</span></h2>
+                </div>
+            </div>
+            <div class="text-gray-600 dark:text-gray-300 space-y-3">
+                <p><strong>5 bước:</strong> <strong>S</strong>urvey (Lướt tổng quan) → <strong>Q</strong>uestion (Đặt
+                    câu hỏi) → <strong>R</strong>ead (Đọc kỹ) → <strong>R</strong>ecite (Tóm tắt lại) →
+                    <strong>R</strong>eview (Ôn lại)</p>
+                <p>Đặc biệt hữu ích cho việc đọc SGK dài, tài liệu nghiên cứu, hoặc sách tham khảo.</p>
+                <div class="bg-teal-50 dark:bg-teal-900/20 p-4 rounded-xl mt-4 border-l-4 border-teal-500 text-sm">
+                    <strong>📖 Nguồn:</strong> Robinson (1946) — <em>"Effective Study"</em>. Phương pháp đã được dạy tại
+                    nhiều trường đại học trên thế giới.
+                </div>
+            </div>
+        </div>
+
+        <!-- 8. Cornell Notes -->
+        <div class="method-card glass-card p-8 md:p-10 rounded-[2.5rem] reveal" data-category="notetaking">
+            <div class="flex flex-col md:flex-row md:items-center gap-4 mb-6">
+                <div
+                    class="w-14 h-14 bg-amber-100 dark:bg-amber-900/30 rounded-2xl flex items-center justify-center text-amber-600 shadow-inner shrink-0">
+                    <i class="ph-fill ph-note-pencil text-3xl"></i>
+                </div>
+                <div>
+                    <span
+                        class="text-[9px] uppercase font-black text-amber-600 bg-amber-600/10 px-2 py-0.5 rounded-full">Ghi
+                        chú</span>
+                    <h2 class="text-2xl font-bold dark:text-white mt-1">Cornell Notes <span class="text-amber-600">(Ghi
+                            Chú Cornell)</span></h2>
+                </div>
+            </div>
+            <div class="text-gray-600 dark:text-gray-300 space-y-3">
+                <p><strong>Cách chia giấy:</strong></p>
+                <ul class="list-disc list-inside space-y-1 ml-4">
+                    <li><strong>Cột trái (2.5"):</strong> Từ khóa, câu hỏi gợi nhớ</li>
+                    <li><strong>Cột phải (6"):</strong> Ghi chú chi tiết trong buổi học</li>
+                    <li><strong>Phần dưới (2"):</strong> Tóm tắt bằng lời riêng sau buổi học</li>
+                </ul>
+                <p>Phần tóm tắt chính là bước Active Recall tự nhiên — ép não tổng hợp lại thay vì chỉ chép.</p>
+                <div class="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-xl mt-4 border-l-4 border-amber-600 text-sm">
+                    <strong>📖 Nguồn:</strong> Walter Pauk, Đại học Cornell (1950s).
+                </div>
+            </div>
+        </div>
+
+        <!-- 9. Pomodoro -->
+        <div class="method-card glass-card p-8 md:p-10 rounded-[2.5rem] reveal" data-category="planning wellbeing">
+            <div class="flex flex-col md:flex-row md:items-center gap-4 mb-6">
+                <div
+                    class="w-14 h-14 bg-red-100 dark:bg-red-900/30 rounded-2xl flex items-center justify-center text-red-500 shadow-inner shrink-0">
+                    <i class="ph-fill ph-alarm text-3xl"></i>
+                </div>
+                <div>
+                    <span class="text-[9px] uppercase font-black text-red-500 bg-red-500/10 px-2 py-0.5 rounded-full">Kế
+                        hoạch + Sức khỏe</span>
+                    <h2 class="text-2xl font-bold dark:text-white mt-1">Pomodoro <span class="text-red-500">(Cà Chua Tập
+                            Trung)</span></h2>
+                </div>
+            </div>
+            <div class="text-gray-600 dark:text-gray-300 space-y-3">
+                <p><strong>Quy tắc:</strong> Học 25 phút → Nghỉ 5 phút → Lặp lại. Sau 4 phiên → Nghỉ dài 15–30 phút.</p>
+                <p>Phương pháp giúp duy trì tập trung cao độ, tránh kiệt sức, và tạo cảm giác "hoàn thành" liên tục.</p>
+                <p class="text-ns-purple font-bold">💡 <a href="apps/pomodoro.html"
+                        class="underline hover:text-ns-purple-light">Dùng Pomodoro Timer của AITECH →</a></p>
+                <div class="bg-red-50 dark:bg-red-900/20 p-4 rounded-xl mt-4 border-l-4 border-red-500 text-sm">
+                    <strong>📖 Nguồn:</strong> Francesco Cirillo (1980s). Phương pháp đã được nhiều nghiên cứu về
+                    <em>time management</em> xác nhận hiệu quả.
+                </div>
+            </div>
+        </div>
+
+        <!-- 10. SMART Goals + Habit Formation -->
+        <div class="method-card glass-card p-8 md:p-10 rounded-[2.5rem] reveal" data-category="planning">
+            <div class="flex flex-col md:flex-row md:items-center gap-4 mb-6">
+                <div
+                    class="w-14 h-14 bg-emerald-100 dark:bg-emerald-900/30 rounded-2xl flex items-center justify-center text-emerald-500 shadow-inner shrink-0">
+                    <i class="ph-fill ph-target text-3xl"></i>
+                </div>
+                <div>
+                    <span
+                        class="text-[9px] uppercase font-black text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">Kế
+                        hoạch</span>
+                    <h2 class="text-2xl font-bold dark:text-white mt-1">Mục Tiêu SMART & <span
+                            class="text-emerald-500">Xây Dựng Thói Quen</span></h2>
+                </div>
+            </div>
+            <div class="text-gray-600 dark:text-gray-300 space-y-3">
+                <p><strong>SMART:</strong> <strong>S</strong>pecific (Cụ thể) — <strong>M</strong>easurable (Đo được) —
+                    <strong>A</strong>chievable (Khả thi) — <strong>R</strong>elevant (Phù hợp) —
+                    <strong>T</strong>ime-bound (Có thời hạn)</p>
+                <p><strong>Xây dựng thói quen:</strong> Bắt đầu cực nhỏ (2 phút/ngày), gắn với hành vi có sẵn, thưởng
+                    bản thân, theo dõi chuỗi ngày.</p>
+                <p class="text-ns-purple font-bold">💡 <a href="apps/study-planner.html"
+                        class="underline hover:text-ns-purple-light">Dùng Study Planner của AITECH →</a></p>
+                <div
+                    class="bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-xl mt-4 border-l-4 border-emerald-500 text-sm">
+                    <strong>📖 Nguồn:</strong> Doran (1981) — Mô hình SMART. James Clear (2018) — <em>"Atomic
+                        Habits"</em>.
+                </div>
+            </div>
+        </div>
+
+        <!-- 11. Mindfulness & Wellbeing -->
+        <div class="method-card glass-card p-8 md:p-10 rounded-[2.5rem] reveal" data-category="wellbeing">
+            <div class="flex flex-col md:flex-row md:items-center gap-4 mb-6">
+                <div
+                    class="w-14 h-14 bg-pink-100 dark:bg-pink-900/30 rounded-2xl flex items-center justify-center text-pink-500 shadow-inner shrink-0">
+                    <i class="ph-fill ph-heart text-3xl"></i>
+                </div>
+                <div>
+                    <span
+                        class="text-[9px] uppercase font-black text-pink-500 bg-pink-500/10 px-2 py-0.5 rounded-full">Sức
+                        khỏe</span>
+                    <h2 class="text-2xl font-bold dark:text-white mt-1">Chăm Sóc <span class="text-pink-500">Sức Khỏe
+                            Tinh Thần</span></h2>
+                </div>
+            </div>
+            <div class="text-gray-600 dark:text-gray-300 space-y-3">
+                <p>Học tập hiệu quả cần nền tảng sức khỏe tốt. Ngủ đủ 7–9 tiếng, vận động 30 phút/ngày, và duy trì các
+                    mối quan hệ tích cực.</p>
+                <p><strong>Gợi ý:</strong></p>
+                <ul class="list-disc list-inside space-y-1 ml-4">
+                    <li>Kỹ thuật hít thở 4-7-8 khi căng thẳng</li>
+                    <li>Viết nhật ký biết ơn (3 điều mỗi tối)</li>
+                    <li>Nghỉ ngơi đúng cách giữa các phiên học</li>
+                    <li>Chia sẻ với người đáng tin tưởng khi quá tải</li>
+                </ul>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- CTA -->
+    <section class="max-w-4xl mx-auto px-4 mt-16 text-center reveal">
+        <div class="glass-card p-10 rounded-[3rem] border-2 border-ns-purple/20">
+            <h2 class="text-2xl font-bold mb-4 dark:text-white">Sẵn sàng bắt đầu? 🚀</h2>
+            <p class="text-gray-500 dark:text-gray-400 mb-8">Đánh giá năng lực tự học để nhận gợi ý phương pháp phù hợp
+                nhất.</p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="assessment.html" class="hero-gradient text-white px-8 py-3 rounded-xl font-bold shadow-xl">Đánh
+                    giá năng lực <i class="ph-bold ph-arrow-right ml-1"></i></a>
+                <a href="apps.html"
+                    class="bg-white dark:bg-slate-800 text-ns-purple border-2 border-ns-purple px-8 py-3 rounded-xl font-bold">Khám
+                    phá công cụ</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="text-center mt-24 text-gray-400 dark:text-gray-600 text-sm pb-10">
+        <div class="flex justify-center items-center gap-2 mb-4">
+            <i class="ph-fill ph-sparkle text-2xl text-ns-purple"></i>
+            <span class="font-bold text-slate-800 dark:text-white uppercase tracking-wider">AITECH</span>
+        </div>
+        <p class="mt-1">Dành cho học sinh THPT Việt Nam — 2026</p>
+    </footer>
+
+    <script>
+        function filterMethods(category) {
+            document.querySelectorAll('.filter-btn').forEach(b => {
+                b.classList.remove('active', 'bg-ns-purple', 'text-white');
+                b.classList.add('bg-white', 'dark:bg-slate-700');
+            });
+            event.currentTarget.classList.add('active', 'bg-ns-purple', 'text-white');
+            event.currentTarget.classList.remove('bg-white', 'dark:bg-slate-700');
+            document.querySelectorAll('.method-card').forEach(card => {
+                if (category === 'all') {
+                    card.classList.remove('hidden-method');
+                } else {
+                    const cats = (card.dataset.category || '').split(' ');
+                    card.classList.toggle('hidden-method', !cats.includes(category));
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>

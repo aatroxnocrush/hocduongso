@@ -1,0 +1,159 @@
+﻿<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Về AITECH — Học đường số dành cho học sinh THPT</title>
+    <meta name="description" content="Giới thiệu về dự án AITECH — sứ mệnh, đội ngũ và tầm nhìn.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="aitech.css">
+    <script>tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Quicksand', 'sans-serif'] }, colors: { 'ns-purple': '#7c5cfc', 'ns-purple-light': '#a78bfa', 'ns-purple-soft': '#ede9fe', 'dark-text': '#5A4A4A' } } } }</script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="aitech.js"></script>
+</head>
+
+<body class="relative min-h-screen pb-20 font-sans text-dark-text dark:text-gray-100">
+
+    <div class="blob bg-purple-100 w-[500px] h-[500px] rounded-full top-[-100px] right-[-150px] animate-float"></div>
+    <div class="blob bg-pink-100 w-[400px] h-[400px] rounded-full bottom-20 left-[-100px]"></div>
+
+    <button onclick="toggleTheme()"
+        class="fixed bottom-8 right-8 z-[60] bg-white dark:bg-slate-800 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-yellow-500 border-4 border-white dark:border-slate-700 hover:scale-110 transition-all">
+        <i class="ph-fill ph-sun text-2xl dark:hidden"></i><i
+            class="ph-fill ph-moon text-2xl text-blue-300 hidden dark:block"></i>
+    </button>
+
+    <nav class="p-4 sm:p-6 sticky top-0 z-50" id="navbar">
+        <div class="max-w-6xl mx-auto flex justify-between items-center glass-card px-6 py-3 rounded-full">
+            <a href="index.html"
+                class="flex items-center gap-2 text-gray-500 hover:text-ns-purple transition-colors font-bold group"><i
+                    class="ph-bold ph-arrow-left group-hover:-translate-x-1 transition-transform"></i> Trang chủ</a>
+            <div class="font-bold text-lg text-ns-purple flex items-center gap-2"><i
+                    class="ph-fill ph-sparkle"></i><span class="hidden sm:inline">Về AITECH</span></div>
+            <div></div>
+        </div>
+    </nav>
+
+    <header class="text-center px-4 mb-16 mt-8 reveal">
+        <div
+            class="inline-block bg-white dark:bg-slate-800 text-ns-purple text-[10px] font-black px-4 py-1.5 rounded-full shadow-sm mb-6 uppercase tracking-widest border border-ns-purple/10">
+            Dự án 2026</div>
+        <h1 class="text-4xl md:text-6xl font-extrabold dark:text-white mb-6">
+            <i class="ph-fill ph-sparkle text-ns-purple"></i> <span class="text-ns-purple italic">AITECH</span>
+        </h1>
+        <p class="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto text-lg leading-relaxed">
+            Hệ sinh thái hỗ trợ tự học toàn diện, giúp học sinh THPT Việt Nam phát triển năng lực tự chủ học tập trong
+            kỷ nguyên số.
+        </p>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-4 space-y-12">
+
+        <!-- Mission -->
+        <section class="glass-card p-10 rounded-[2.5rem] reveal">
+            <div class="flex items-center gap-4 mb-6">
+                <div
+                    class="w-14 h-14 bg-purple-100 dark:bg-purple-900/30 rounded-2xl flex items-center justify-center text-ns-purple shadow-inner">
+                    <i class="ph-fill ph-rocket text-3xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold dark:text-white">Sứ Mệnh</h2>
+            </div>
+            <div class="text-gray-600 dark:text-gray-300 text-lg space-y-4 leading-relaxed">
+                <p><strong>AITECH</strong> ra đời từ mong muốn giải quyết một bài toán thực tế: học sinh THPT Việt
+                    Nam đang thiếu <em>hệ thống hỗ trợ tự học</em> hiệu quả, đặc biệt trong bối cảnh chương trình GDPT
+                    2018.</p>
+                <p>Chúng mình xây dựng một nền tảng <strong>miễn phí, mở</strong> — tổng hợp kiến thức, công cụ và
+                    phương pháp có cơ sở khoa học — để mỗi bạn trẻ đều có thể tự chủ trong hành trình học tập của mình.
+                </p>
+            </div>
+        </section>
+
+        <!-- What We Offer -->
+        <section class="reveal">
+            <h2 class="text-2xl font-bold dark:text-white mb-8 text-center">AITECH Cung Cấp Gì? 🎁</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="glass-card p-8 rounded-[2rem] text-center hover:-translate-y-2 transition-all">
+                    <div
+                        class="w-16 h-16 mx-auto bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center text-blue-500 mb-4 shadow-inner">
+                        <i class="ph-fill ph-chart-bar text-3xl"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2 dark:text-white">Phân tích thực trạng</h3>
+                    <p class="text-gray-500 text-sm">Báo cáo chi tiết về thách thức tự học, dựa trên nghiên cứu và dữ
+                        liệu thực tế.</p>
+                </div>
+                <div
+                    class="glass-card p-8 rounded-[2rem] text-center hover:-translate-y-2 transition-all border-2 border-ns-purple/20">
+                    <div
+                        class="w-16 h-16 mx-auto bg-purple-100 dark:bg-purple-900/30 rounded-2xl flex items-center justify-center text-ns-purple mb-4 shadow-inner">
+                        <i class="ph-fill ph-wrench text-3xl"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2 dark:text-white">Bộ công cụ số</h3>
+                    <p class="text-gray-500 text-sm">Pomodoro, timetable, expense tracker, GPA calculator, study planner
+                        — tất cả trong AITECH.</p>
+                </div>
+                <div class="glass-card p-8 rounded-[2rem] text-center hover:-translate-y-2 transition-all">
+                    <div
+                        class="w-16 h-16 mx-auto bg-green-100 dark:bg-green-900/30 rounded-2xl flex items-center justify-center text-green-500 mb-4 shadow-inner">
+                        <i class="ph-fill ph-lightbulb text-3xl"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2 dark:text-white">Phương pháp khoa học</h3>
+                    <p class="text-gray-500 text-sm">Active Recall, Spaced Repetition, Feynman... có nguồn nghiên cứu rõ
+                        ràng.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Team -->
+        <section class="glass-card p-10 rounded-[2.5rem] reveal">
+            <h2 class="text-2xl font-bold dark:text-white mb-8 text-center">Tác Giả 👤</h2>
+            <div class="max-w-md mx-auto">
+                <div
+                    class="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 p-8 rounded-[2rem] text-center border-2 border-ns-purple/10">
+                    <div class="w-20 h-20 mx-auto bg-ns-purple/10 rounded-full flex items-center justify-center mb-4">
+                        <i class="ph-fill ph-code text-4xl text-ns-purple"></i>
+                    </div>
+                    <h3 class="text-xl font-bold dark:text-white mb-1">Trần Đình Mạnh Phong</h3>
+                    <span class="text-ns-purple font-black text-[10px] uppercase tracking-widest">Tác giả —
+                        Developer</span>
+                    <p class="text-gray-500 text-sm mt-3">Nghiên cứu nội dung, phát triển website, thiết kế UI/UX, xây
+                        dựng công cụ số, triển
+                        khai chatbot AI.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Vision -->
+        <section
+            class="glass-card p-10 rounded-[2.5rem] reveal border-2 border-ns-purple/10 bg-gradient-to-br from-purple-50/50 to-white/50 dark:from-purple-900/10 dark:to-slate-900/50">
+            <div class="text-center">
+                <i class="ph-fill ph-shooting-star text-5xl text-ns-purple mb-4"></i>
+                <h2 class="text-2xl font-bold dark:text-white mb-4">Tầm Nhìn</h2>
+                <p class="text-gray-600 dark:text-gray-300 text-lg max-w-2xl mx-auto leading-relaxed">
+                    Chúng mình tin rằng <strong>mỗi học sinh đều có khả năng tự học</strong> — chỉ cần được trang bị
+                    đúng công cụ, đúng phương pháp, và đúng môi trường. AITECH là bước khởi đầu cho hành trình đó.
+                </p>
+                <div class="mt-8">
+                    <a href="assessment.html"
+                        class="hero-gradient text-white px-8 py-3 rounded-xl font-bold shadow-xl inline-block">Bắt đầu
+                        hành trình của bạn <i class="ph-bold ph-arrow-right ml-1"></i></a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="text-center mt-24 text-gray-400 dark:text-gray-600 text-sm pb-10">
+        <div class="flex justify-center items-center gap-2 mb-4"><i
+                class="ph-fill ph-sparkle text-2xl text-ns-purple"></i><span
+                class="font-bold text-slate-800 dark:text-white uppercase tracking-wider">AITECH</span></div>
+        <p>Dành cho học sinh THPT Việt Nam — 2026</p>
+    </footer>
+</body>
+
+</html>

@@ -1,0 +1,326 @@
+﻿<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Đánh Giá Năng Lực Tự Học — AITECH</title>
+    <meta name="description"
+        content="Bộ câu hỏi đánh giá năng lực tự học dành cho học sinh THPT — radar chart, gợi ý cá nhân hóa.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <link rel="stylesheet" href="aitech.css">
+    <script>tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Quicksand', 'sans-serif'] }, colors: { 'ns-purple': '#7c5cfc', 'ns-purple-light': '#a78bfa', 'ns-purple-soft': '#ede9fe', 'dark-text': '#5A4A4A' } } } }</script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="aitech.js"></script>
+</head>
+
+<body class="relative min-h-screen pb-20 font-sans text-dark-text dark:text-gray-100">
+
+    <div class="blob bg-purple-100 w-[500px] h-[500px] rounded-full top-[-100px] right-[-150px] animate-float"></div>
+
+    <button onclick="toggleTheme()"
+        class="fixed bottom-8 right-8 z-[60] bg-white dark:bg-slate-800 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-yellow-500 border-4 border-white dark:border-slate-700 hover:scale-110 transition-all">
+        <i class="ph-fill ph-sun text-2xl dark:hidden"></i><i
+            class="ph-fill ph-moon text-2xl text-blue-300 hidden dark:block"></i>
+    </button>
+
+    <nav class="p-4 sm:p-6 sticky top-0 z-50" id="navbar">
+        <div class="max-w-6xl mx-auto flex justify-between items-center glass-card px-6 py-3 rounded-full">
+            <a href="index.html"
+                class="flex items-center gap-2 text-gray-500 hover:text-ns-purple transition-colors font-bold group"><i
+                    class="ph-bold ph-arrow-left group-hover:-translate-x-1 transition-transform"></i> Trang chủ</a>
+            <div class="font-bold text-lg text-ns-purple flex items-center gap-2"><i class="ph-fill ph-exam"></i><span
+                    class="hidden sm:inline">Đánh Giá Tự Học</span></div>
+            <a href="giaiphap.html"
+                class="text-sm font-bold text-gray-500 hover:text-ns-purple transition-colors hidden md:block">Giải pháp
+                <i class="ph-bold ph-arrow-right"></i></a>
+        </div>
+    </nav>
+
+    <!-- Intro Screen -->
+    <div id="screen-intro" class="max-w-3xl mx-auto px-4 mt-12 text-center">
+        <div class="glass-card p-10 sm:p-16 rounded-[3rem] reveal">
+            <i class="ph-duotone ph-exam text-7xl text-ns-purple mb-6"></i>
+            <h1 class="text-3xl md:text-5xl font-extrabold dark:text-white mb-4 leading-tight">Đánh Giá <span
+                    class="text-ns-purple italic">Năng Lực Tự Học</span></h1>
+            <p class="text-gray-500 dark:text-gray-400 text-lg mb-8 max-w-xl mx-auto">20 câu hỏi — ~5 phút. Khám phá
+                điểm mạnh, điểm cần cải thiện, và nhận gợi ý phương pháp phù hợp.</p>
+            <div class="space-y-3 text-left max-w-md mx-auto mb-8 text-sm text-gray-500">
+                <div class="flex items-center gap-3"><i class="ph-fill ph-check-circle text-green-500"></i> Không có câu
+                    trả lời đúng/sai</div>
+                <div class="flex items-center gap-3"><i class="ph-fill ph-check-circle text-green-500"></i> Kết quả được
+                    lưu trên thiết bị của bạn</div>
+                <div class="flex items-center gap-3"><i class="ph-fill ph-check-circle text-green-500"></i> Có thể làm
+                    lại bất cứ lúc nào</div>
+            </div>
+            <button onclick="startAssessment()"
+                class="hero-gradient text-white px-10 py-4 rounded-xl font-black uppercase tracking-widest text-sm shadow-xl hover:scale-105 transition-transform">Bắt
+                đầu đánh giá <i class="ph-bold ph-arrow-right ml-2"></i></button>
+        </div>
+    </div>
+
+    <!-- Quiz Screen -->
+    <div id="screen-quiz" class="hidden max-w-3xl mx-auto px-4 mt-12">
+        <!-- Progress -->
+        <div class="glass-card p-4 rounded-2xl mb-8">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-xs font-bold text-gray-500">Câu <span id="q-current">1</span> / <span
+                        id="q-total">20</span></span>
+                <span id="q-group"
+                    class="text-[9px] uppercase font-black text-ns-purple bg-ns-purple/10 px-2 py-0.5 rounded-full"></span>
+            </div>
+            <div class="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2">
+                <div id="progress-bar" class="h-2 rounded-full bg-ns-purple transition-all duration-300"
+                    style="width:0%"></div>
+            </div>
+        </div>
+        <!-- Question -->
+        <div class="glass-card p-8 sm:p-10 rounded-[2.5rem]">
+            <h2 id="q-text" class="text-xl font-bold dark:text-white mb-6 leading-relaxed"></h2>
+            <div id="q-options" class="space-y-3"></div>
+        </div>
+    </div>
+
+    <!-- Result Screen -->
+    <div id="screen-result" class="hidden max-w-5xl mx-auto px-4 mt-12 space-y-8">
+        <div class="glass-card p-10 rounded-[3rem] text-center">
+            <i class="ph-fill ph-chart-polar text-6xl text-ns-purple mb-4"></i>
+            <h2 class="text-3xl font-extrabold dark:text-white mb-2">Kết Quả Đánh Giá</h2>
+            <p class="text-gray-500 mb-8">Dựa trên câu trả lời của bạn, đây là phân tích chi tiết:</p>
+            <div class="max-w-lg mx-auto mb-8"><canvas id="radar-chart"></canvas></div>
+        </div>
+        <!-- Scores Detail -->
+        <div id="scores-detail" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+        <!-- Recommendations -->
+        <div id="recommendations" class="glass-card p-8 rounded-[2.5rem]"></div>
+        <!-- Actions -->
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <button onclick="exportResult()"
+                class="bg-white dark:bg-slate-800 text-ns-purple border-2 border-ns-purple px-6 py-3 rounded-xl font-bold hover:bg-purple-50 transition-all"><i
+                    class="ph-bold ph-download-simple mr-2"></i>Xuất JSON</button>
+            <button onclick="resetAssessment()"
+                class="bg-white dark:bg-slate-800 text-gray-500 border-2 border-gray-300 px-6 py-3 rounded-xl font-bold hover:bg-gray-50 transition-all"><i
+                    class="ph-bold ph-arrow-counter-clockwise mr-2"></i>Làm lại</button>
+            <a href="giaiphap.html"
+                class="hero-gradient text-white px-6 py-3 rounded-xl font-bold shadow-xl text-center">Xem giải pháp phù
+                hợp <i class="ph-bold ph-arrow-right ml-1"></i></a>
+        </div>
+    </div>
+
+    <footer class="text-center mt-24 text-gray-400 dark:text-gray-600 text-sm pb-10">
+        <div class="flex justify-center items-center gap-2 mb-4"><i
+                class="ph-fill ph-sparkle text-2xl text-ns-purple"></i><span
+                class="font-bold text-slate-800 dark:text-white uppercase tracking-wider">AITECH</span></div>
+        <p>Dành cho học sinh THPT Việt Nam — 2026</p>
+    </footer>
+
+    <script>
+        const QUESTIONS = [
+            // Lập kế hoạch (Planning)
+            { text: 'Trước khi bắt đầu học một chủ đề mới, em thường làm gì?', group: 'planning', options: ['Bắt đầu ngay theo SGK', 'Lướt qua mục lục để có cái nhìn tổng quan', 'Lập kế hoạch cụ thể với mục tiêu rõ ràng', 'Tìm hiểu kỹ: xem video intro, đặt câu hỏi, liên hệ bài cũ'] },
+            { text: 'Em đặt mục tiêu học tập như thế nào?', group: 'planning', options: ['Chưa đặt mục tiêu cụ thể', 'Đặt mục tiêu chung chung (VD: "học giỏi hơn")', 'Đặt mục tiêu theo tuần/tháng', 'Dùng mô hình SMART: cụ thể, đo lường, thời hạn'] },
+            { text: 'Khi có bài kiểm tra quan trọng, em thường ôn tập thế nào?', group: 'planning', options: ['Ôn ngay đêm trước (cram)', 'Ôn 2-3 ngày trước', 'Ôn rải đều trong tuần, có lịch cụ thể', 'Dùng Spaced Repetition: ôn theo khoảng cách tăng dần'] },
+
+            // Tự chủ (Autonomy)
+            { text: 'Khi gặp bài tập khó mà không giải được, em thường:', group: 'autonomy', options: ['Bỏ qua, chờ thầy/cô chữa', 'Hỏi bạn bè ngay lập tức', 'Thử nhiều cách khác nhau trước khi hỏi', 'Phân tích xem bị tắc ở đâu, tìm tài liệu bổ trợ, rồi mới hỏi'] },
+            { text: 'Em sử dụng AI (ChatGPT, Gemini...) trong học tập thế nào?', group: 'autonomy', options: ['Chưa dùng / Không biết cách dùng', 'Dùng để tra lời giải/đáp án', 'Dùng để giải thích khái niệm khó hiểu', 'Dùng như "gia sư": hỏi gợi ý, kiểm chứng, tự làm trước rồi so sánh'] },
+            { text: 'Hàng ngày em dành bao nhiêu thời gian cho tự học (ngoài bài trên lớp)?', group: 'autonomy', options: ['Hầu như không', 'Khoảng 30 phút', '1–2 tiếng có kế hoạch', '2 tiếng trở lên, có ưu tiên rõ ràng và theo dõi tiến trình'] },
+
+            // Siêu nhận thức (Metacognition)
+            { text: 'Sau khi học xong một phần, em có đánh giá lại không?', group: 'metacognition', options: ['Không, học xong là xong', 'Thỉnh thoảng xem lại vở', 'Tự kiểm tra bằng câu hỏi/flashcard', 'Đánh giá: mình hiểu được gì, chưa hiểu gì, cần ôn lại phần nào'] },
+            { text: 'Khi nhận ra mình học sai phương pháp (VD: đọc đi đọc lại không nhớ), em:', group: 'metacognition', options: ['Vẫn tiếp tục vì quen', 'Biết nhưng chưa thay đổi', 'Tìm phương pháp mới (VD: Active Recall)', 'Thử nghiệm nhiều cách, so sánh, chọn cách phù hợp nhất với mình'] },
+            { text: 'Em có thói quen ghi chú bằng lời riêng thay vì chép nguyên văn không?', group: 'metacognition', options: ['Luôn chép nguyên văn', 'Chủ yếu chép, đôi khi viết thêm', 'Thường tóm tắt bằng lời riêng', 'Dùng kỹ thuật Cornell/Sketchnote: ghi chú + câu hỏi + tóm tắt'] },
+
+            // Tư duy phản biện (Critical Thinking)
+            { text: 'Khi đọc một thông tin trên mạng, em thường:', group: 'critical_thinking', options: ['Tin luôn nếu nghe hợp lý', 'Đọc thêm vài nguồn nữa', 'Kiểm tra nguồn gốc (ai viết, có dẫn chứng không?)', 'Đánh giá phương pháp, dữ liệu, so sánh với nguồn học thuật'] },
+            { text: 'Khi thầy/cô giảng một công thức/quy tắc, em thường:', group: 'critical_thinking', options: ['Ghi lại và học thuộc', 'Hỏi ví dụ để hiểu rõ hơn', 'Tự tìm hiểu tại sao công thức đúng', 'Tự chứng minh/suy luận lại, tìm giới hạn áp dụng'] },
+            { text: 'Em có bao giờ tranh luận (lịch sự) với thầy cô hoặc bạn bè về kiến thức không?', group: 'critical_thinking', options: ['Không bao giờ', 'Hiếm khi, ngại nói', 'Thỉnh thoảng khi có ý kiến khác', 'Thường xuyên — mình thấy tranh luận giúp hiểu sâu hơn'] },
+
+            // AI Literacy
+            { text: 'Em hiểu thế nào về cách hoạt động của AI (ChatGPT, Gemini...)?', group: 'ai_literacy', options: ['Không biết', 'Biết nó trả lời câu hỏi nhưng không rõ cơ chế', 'Hiểu cơ bản: nó dự đoán từ tiếp theo dựa trên dữ liệu', 'Hiểu rõ: strengths/limitations, có thể hallucinate, cần kiểm chứng'] },
+            { text: 'Khi AI cho em một lời giải, em:', group: 'ai_literacy', options: ['Copy nguyên văn', 'Đọc hiểu rồi dùng', 'Kiểm tra lại bằng cách giải thủ công', 'So sánh nhiều nguồn, đánh giá logic, chỉ dùng khi đã xác minh'] },
+
+            // Kiên trì (Perseverance)
+            { text: 'Khi điểm kiểm tra thấp hơn kỳ vọng, em thường:', group: 'perseverance', options: ['Buồn chán, mất động lực', 'Cố gắng hơn nhưng không biết cách', 'Phân tích bài sai, rút kinh nghiệm cụ thể', 'Xem đó là phản hồi, điều chỉnh phương pháp, đặt mục tiêu mới'] },
+            { text: 'Em có thể tập trung học liên tục bao lâu?', group: 'perseverance', options: ['Dưới 15 phút', '15–30 phút', '30–45 phút (Pomodoro 1 phiên)', '45 phút trở lên, biết nghỉ đúng lúc'] },
+
+            // Quản lý thời gian (Time Management)
+            { text: 'Em quản lý thời gian học tập bằng cách nào?', group: 'time_management', options: ['Không quản lý, học khi nào rảnh', 'Ghi nhớ trong đầu', 'Dùng to-do list / lịch giấy', 'Dùng ứng dụng (Notion, Google Calendar...) kết hợp review tuần'] },
+            { text: 'Khi có nhiều bài cần làm cùng lúc, em ưu tiên thế nào?', group: 'time_management', options: ['Làm bài nào dễ trước', 'Làm bài nào gần deadline nhất', 'Xếp theo độ quan trọng + deadline', 'Dùng ma trận Eisenhower hoặc phương pháp tương tự'] },
+            { text: 'Em có dành thời gian cuối tuần để review lại những gì đã học không?', group: 'time_management', options: ['Không', 'Thỉnh thoảng', 'Có, xem lại vở/ghi chú', 'Có hệ thống: review + đặt mục tiêu tuần mới + điều chỉnh kế hoạch'] },
+        ];
+
+        const GROUP_LABELS = {
+            planning: 'Lập kế hoạch',
+            autonomy: 'Tính tự chủ',
+            metacognition: 'Siêu nhận thức',
+            critical_thinking: 'Tư duy phản biện',
+            ai_literacy: 'Năng lực AI',
+            perseverance: 'Kiên trì & Tập trung',
+            time_management: 'Quản lý thời gian'
+        };
+
+        const GROUP_COLORS = {
+            planning: '#7c5cfc', autonomy: '#38bdf8', metacognition: '#34d399',
+            critical_thinking: '#fb923c', ai_literacy: '#f472b6', perseverance: '#a78bfa', time_management: '#fbbf24'
+        };
+
+        const GROUP_RECS = {
+            planning: { low: 'Bắt đầu với mục tiêu SMART nhỏ: mỗi tuần chọn 1 môn, đặt 1 mục tiêu cụ thể. Thử dùng Study Planner của AITECH.', high: 'Tuyệt vời! Bạn có nền tảng lập kế hoạch tốt. Thử thêm phương pháp Spaced Repetition để ôn tập hiệu quả hơn.' },
+            autonomy: { low: 'Thử quy tắc "5 phút": gặp bài khó → tự tìm cách trong 5 phút trước khi hỏi. Dùng AI làm "gia sư gợi ý" thay vì "máy cho đáp án".', high: 'Bạn rất tự chủ! Hãy chia sẻ cách học của mình với bạn bè — theo Tháp Học Tập, dạy lại giúp ghi nhớ 90%.' },
+            metacognition: { low: 'Sau mỗi buổi học, viết 3 dòng: "Hôm nay mình hiểu được gì?" + "Chưa hiểu gì?" + "Cần ôn lại phần nào?". Thử ghi chú Cornell.', high: 'Năng lực tự đánh giá của bạn rất tốt. Hãy thử kỹ thuật Feynman: giảng lại cho người khác bằng lời đơn giản.' },
+            critical_thinking: { low: 'Khi đọc thông tin mới, tập thói quen hỏi: "Ai nói điều này? Có dẫn chứng không? Có nguồn ngược lại không?". Thử phương pháp SQ3R.', high: 'Tư duy phản biện của bạn nổi bật! Hãy áp dụng vào việc đánh giá nguồn tài liệu online và kết quả AI.' },
+            ai_literacy: { low: 'Hãy xem AI như "chiếc máy tính thông minh" — nó giỏi tổng hợp nhưng có thể sai. Luôn kiểm chứng kết quả AI với SGK hoặc nguồn uy tín.', high: 'Bạn sử dụng AI rất thông minh! Hãy chia sẻ kinh nghiệm này với bạn bè để giúp mọi người dùng AI hiệu quả.' },
+            perseverance: { low: 'Thử Pomodoro: 25 phút tập trung → 5 phút nghỉ. Bắt đầu nhỏ (1 phiên/ngày), tăng dần. Xem điểm thấp là "chẩn đoán bệnh" chứ không phải "bản án".', high: 'Sức bền và tập trung của bạn rất tốt. Hãy kết hợp với kỹ thuật Interleaving để tăng hiệu quả.' },
+            time_management: { low: 'Bắt đầu bằng 1 việc đơn giản: mỗi tối ghi ra 3 việc cần làm ngày mai, xếp theo ưu tiên. Dùng Study Planner của AITECH.', high: 'Quản lý thời gian xuất sắc! Hãy thử phương pháp "Time Boxing" — đặt khung giờ cố định cho từng hoạt động.' }
+        };
+
+        let currentQ = 0;
+        let answers = [];
+        let radarChart = null;
+
+        // Check saved state
+        const saved = localStorage.getItem('ns_assessment');
+        if (saved) {
+            try {
+                const data = JSON.parse(saved);
+                if (data.answers && data.answers.length === QUESTIONS.length) {
+                    answers = data.answers;
+                    showResult();
+                }
+            } catch (e) { }
+        }
+
+        function startAssessment() {
+            currentQ = 0; answers = [];
+            document.getElementById('screen-intro').classList.add('hidden');
+            document.getElementById('screen-result').classList.add('hidden');
+            document.getElementById('screen-quiz').classList.remove('hidden');
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const q = QUESTIONS[currentQ];
+            document.getElementById('q-current').textContent = currentQ + 1;
+            document.getElementById('q-total').textContent = QUESTIONS.length;
+            document.getElementById('q-group').textContent = GROUP_LABELS[q.group];
+            document.getElementById('q-text').textContent = q.text;
+            document.getElementById('progress-bar').style.width = ((currentQ / QUESTIONS.length) * 100) + '%';
+            const optDiv = document.getElementById('q-options');
+            optDiv.innerHTML = q.options.map((opt, i) => `
+        <button onclick="answerQuestion(${i + 1})" class="w-full text-left p-4 rounded-2xl border-2 border-gray-200 dark:border-slate-700 hover:border-ns-purple dark:hover:border-ns-purple transition-all flex items-start gap-3 group">
+          <span class="w-8 h-8 rounded-xl bg-gray-100 dark:bg-slate-700 flex items-center justify-center text-xs font-bold text-gray-500 group-hover:bg-ns-purple group-hover:text-white transition-all shrink-0">${i + 1}</span>
+          <span class="text-sm font-semibold dark:text-gray-200">${opt}</span>
+        </button>
+      `).join('');
+        }
+
+        function answerQuestion(score) {
+            answers.push({ question: currentQ, group: QUESTIONS[currentQ].group, score: score });
+            currentQ++;
+            if (currentQ >= QUESTIONS.length) {
+                localStorage.setItem('ns_assessment', JSON.stringify({ answers: answers, timestamp: new Date().toISOString() }));
+                showResult();
+            } else {
+                showQuestion();
+            }
+        }
+
+        function showResult() {
+            document.getElementById('screen-intro').classList.add('hidden');
+            document.getElementById('screen-quiz').classList.add('hidden');
+            document.getElementById('screen-result').classList.remove('hidden');
+
+            // Calculate scores per group (1-4 scale → 0-100)
+            const groups = {};
+            answers.forEach(a => {
+                if (!groups[a.group]) groups[a.group] = { total: 0, count: 0 };
+                groups[a.group].total += a.score;
+                groups[a.group].count++;
+            });
+            const scores = {};
+            for (const g in groups) { scores[g] = Math.round(((groups[g].total / groups[g].count) - 1) / 3 * 100) }
+
+            // Radar Chart
+            const labels = Object.keys(scores).map(k => GROUP_LABELS[k]);
+            const data = Object.values(scores);
+            const ctx = document.getElementById('radar-chart').getContext('2d');
+            if (radarChart) radarChart.destroy();
+            radarChart = new Chart(ctx, {
+                type: 'radar',
+                data: { labels: labels, datasets: [{ label: 'Điểm năng lực', data: data, backgroundColor: 'rgba(124,92,252,0.2)', borderColor: '#7c5cfc', borderWidth: 2, pointBackgroundColor: '#7c5cfc', pointRadius: 5 }] },
+                options: {
+                    responsive: true,
+                    scales: { r: { beginAtZero: true, max: 100, ticks: { stepSize: 20, display: false }, pointLabels: { font: { size: 12, family: 'Quicksand', weight: 'bold' } }, grid: { color: 'rgba(124,92,252,0.1)' } } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // Scores detail
+            const detailHTML = Object.entries(scores).map(([k, v]) => {
+                const color = GROUP_COLORS[k];
+                const level = v >= 75 ? 'Tốt' : v >= 50 ? 'Khá' : v >= 25 ? 'Trung bình' : 'Cần cải thiện';
+                const emoji = v >= 75 ? '🌟' : v >= 50 ? '👍' : v >= 25 ? '📚' : '💪';
+                return `<div class="glass-card p-6 rounded-[2rem]">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white text-lg" style="background:${color}">${emoji}</div>
+            <div>
+              <h3 class="font-bold dark:text-white">${GROUP_LABELS[k]}</h3>
+              <span class="text-xs font-bold" style="color:${color}">${level} — ${v}/100</span>
+            </div>
+          </div>
+          <div class="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2"><div class="h-2 rounded-full transition-all" style="width:${v}%;background:${color}"></div></div>
+        </div>`;
+            }).join('');
+            document.getElementById('scores-detail').innerHTML = detailHTML;
+
+            // Recommendations
+            const sorted = Object.entries(scores).sort((a, b) => a[1] - b[1]);
+            const weakest = sorted.slice(0, 2);
+            const strongest = sorted.slice(-2);
+            let recHTML = `<h2 class="text-2xl font-bold dark:text-white mb-6 flex items-center gap-2"><i class="ph-fill ph-lightbulb text-ns-purple"></i> Gợi Ý Cá Nhân Hóa</h2>`;
+            recHTML += `<div class="space-y-4">`;
+            recHTML += `<h3 class="font-bold text-sm uppercase tracking-wider text-gray-400 mb-2">💪 Cần phát triển thêm:</h3>`;
+            weakest.forEach(([k, v]) => {
+                recHTML += `<div class="p-4 rounded-2xl bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800">
+          <div class="font-bold text-orange-700 dark:text-orange-300 mb-1">${GROUP_LABELS[k]} (${v}/100)</div>
+          <p class="text-sm text-orange-600 dark:text-orange-400">${GROUP_RECS[k].low}</p>
+        </div>`;
+            });
+            recHTML += `<h3 class="font-bold text-sm uppercase tracking-wider text-gray-400 mb-2 mt-6">🌟 Điểm mạnh của bạn:</h3>`;
+            strongest.forEach(([k, v]) => {
+                recHTML += `<div class="p-4 rounded-2xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+          <div class="font-bold text-green-700 dark:text-green-300 mb-1">${GROUP_LABELS[k]} (${v}/100)</div>
+          <p class="text-sm text-green-600 dark:text-green-400">${GROUP_RECS[k].high}</p>
+        </div>`;
+            });
+            recHTML += `</div>`;
+            document.getElementById('recommendations').innerHTML = recHTML;
+        }
+
+        function exportResult() {
+            const data = { answers: answers, timestamp: new Date().toISOString(), project: 'AITECH Assessment' };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+            a.download = `aitech-assessment-${new Date().toISOString().slice(0, 10)}.json`; a.click();
+        }
+
+        function resetAssessment() {
+            if (!confirm('Bạn có chắc muốn làm lại? Kết quả hiện tại sẽ bị xóa.')) return;
+            localStorage.removeItem('ns_assessment');
+            answers = []; currentQ = 0;
+            document.getElementById('screen-result').classList.add('hidden');
+            document.getElementById('screen-quiz').classList.add('hidden');
+            document.getElementById('screen-intro').classList.remove('hidden');
+        }
+    </script>
+</body>
+
+</html>

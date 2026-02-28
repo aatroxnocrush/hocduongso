@@ -1,0 +1,303 @@
+﻿<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Thực Trạng — AITECH</title>
+    <meta name="description"
+        content="Phân tích thực trạng và thách thức tự học của học sinh THPT Việt Nam trong bối cảnh GDPT 2018.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="aitech.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class', theme: {
+                extend: {
+                    fontFamily: { sans: ['Quicksand', 'sans-serif'] },
+                    colors: { 'ns-purple': '#7c5cfc', 'ns-purple-light': '#a78bfa', 'ns-purple-soft': '#ede9fe', 'dark-text': '#5A4A4A' },
+                    animation: { 'float': 'ns-float 6s ease-in-out infinite' },
+                    keyframes: { 'ns-float': { '0%,100%': { transform: 'translateY(0) rotate(0)' }, '50%': { transform: 'translateY(-18px) rotate(1.5deg)' } } }
+                }
+            }
+        }
+    </script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="aitech.js"></script>
+</head>
+
+<body class="relative min-h-screen pb-20 font-sans text-dark-text dark:text-gray-100">
+
+    <!-- Blobs -->
+    <div class="blob bg-orange-100 w-[500px] h-[500px] rounded-full top-[-100px] left-[-150px] animate-float"></div>
+    <div class="blob bg-purple-100 w-[400px] h-[400px] rounded-full bottom-20 right-[-100px]"></div>
+
+    <!-- Theme Toggle -->
+    <button onclick="toggleTheme()"
+        class="fixed bottom-8 right-8 z-[60] bg-white dark:bg-slate-800 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-yellow-500 border-4 border-white dark:border-slate-700 hover:scale-110 active:scale-95 transition-all">
+        <i class="ph-fill ph-sun text-2xl dark:hidden"></i>
+        <i class="ph-fill ph-moon text-2xl text-blue-300 hidden dark:block"></i>
+    </button>
+
+    <!-- Navigation -->
+    <nav class="p-4 sm:p-6 sticky top-0 z-50" id="navbar">
+        <div class="max-w-6xl mx-auto flex justify-between items-center glass-card px-6 py-3 rounded-full">
+            <a href="index.html"
+                class="flex items-center gap-2 text-gray-500 dark:text-gray-300 hover:text-ns-purple transition-colors font-bold group">
+                <i class="ph-bold ph-arrow-left group-hover:-translate-x-1 transition-transform"></i> Trang chủ
+            </a>
+            <div class="font-bold text-lg text-ns-purple flex items-center gap-2">
+                <i class="ph-fill ph-chart-bar"></i>
+                <span class="hidden sm:inline">Phân Tích Thực Trạng</span>
+            </div>
+            <a href="giaiphap.html"
+                class="text-sm font-bold text-gray-500 hover:text-ns-purple transition-colors hidden md:block">Giải pháp
+                <i class="ph-bold ph-arrow-right"></i></a>
+        </div>
+    </nav>
+
+    <!-- Header -->
+    <header class="text-center px-4 mb-16 mt-8 reveal">
+        <span
+            class="inline-block bg-white dark:bg-slate-800 text-ns-purple text-[10px] font-black px-4 py-1.5 rounded-full shadow-sm mb-4 uppercase tracking-widest border border-ns-purple/10">Bối
+            cảnh GDPT 2018</span>
+        <h1 class="text-3xl md:text-5xl font-extrabold dark:text-white mb-6 leading-tight">
+            Thực Trạng <span class="text-ns-purple italic">Tự Học</span><br>Học Sinh THPT Việt Nam
+        </h1>
+        <p class="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto text-lg leading-relaxed px-4">
+            Báo cáo chi tiết về thói quen, tâm lý và những rào cản ảnh hưởng đến hiệu quả tự học trong bối cảnh chương
+            trình giáo dục phổ thông mới.
+        </p>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto px-4 space-y-8">
+
+        <!-- 1. Khủng hoảng định hướng -->
+        <div class="glass-card p-8 md:p-10 rounded-[2.5rem] reveal">
+            <div class="flex items-center gap-4 mb-6">
+                <div
+                    class="w-14 h-14 bg-orange-100 dark:bg-orange-900/30 rounded-2xl flex items-center justify-center text-orange-500 shadow-inner">
+                    <i class="ph-fill ph-compass text-3xl"></i>
+                </div>
+                <h2 class="text-2xl md:text-3xl font-bold dark:text-white">1. Khủng Hoảng <span
+                        class="text-orange-500">Định Hướng</span></h2>
+            </div>
+            <div class="space-y-4 text-gray-600 dark:text-gray-300 text-lg leading-relaxed">
+                <p>Nhiều học sinh THPT đang rơi vào tình trạng <span
+                        class="font-bold text-dark-text dark:text-white underline decoration-orange-300 decoration-4">thiếu
+                        mục đích học tập cụ thể</span>.</p>
+                <p class="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-2xl border-l-4 border-orange-400">
+                    Đặc biệt là các em <strong>học sinh lớp 10</strong>, khi vừa bước chân vào chương trình GDPT 2018
+                    với nhiều thay đổi. Sự chuyển đổi đột ngột về phương pháp giảng dạy và đánh giá khiến nhiều em bị
+                    "ngợp", dẫn đến tâm lý hoang mang.
+                </p>
+                <p>Khi không biết mình học để làm gì, học sinh dễ rơi vào tâm lý chán nản, đối phó, và mất dần hứng thú
+                    với việc tự học.</p>
+            </div>
+        </div>
+
+        <!-- 2. Tăng yêu cầu tự học -->
+        <div class="glass-card p-8 md:p-10 rounded-[2.5rem] reveal">
+            <div class="flex items-center gap-4 mb-6">
+                <div
+                    class="w-14 h-14 bg-purple-100 dark:bg-purple-900/30 rounded-2xl flex items-center justify-center text-ns-purple shadow-inner">
+                    <i class="ph-fill ph-book-open-text text-3xl"></i>
+                </div>
+                <h2 class="text-2xl md:text-3xl font-bold dark:text-white">2. Tăng Yêu Cầu <span
+                        class="text-ns-purple">Tự Học & Tự Quản Lý</span></h2>
+            </div>
+            <div class="space-y-4 text-gray-600 dark:text-gray-300 text-lg leading-relaxed">
+                <p>GDPT 2018 nhấn mạnh <strong>phát triển năng lực</strong> thay vì truyền thụ kiến thức một chiều. Học
+                    sinh cần chủ động tìm tòi, nghiên cứu, và tự đánh giá quá trình học tập — nhưng phần lớn chưa được
+                    trang bị kỹ năng này.</p>
+                <p>Theo nghiên cứu trên ResearchGate (2023), mô hình giáo dục truyền thống tập trung vào ghi nhớ khiến
+                    học sinh khó chuyển sang tự chủ học tập.</p>
+            </div>
+        </div>
+
+        <!-- 3. Khó thích nghi môn tích hợp -->
+        <div class="glass-card p-8 md:p-10 rounded-[2.5rem] reveal">
+            <div class="flex items-center gap-4 mb-6">
+                <div
+                    class="w-14 h-14 bg-cyan-100 dark:bg-cyan-900/30 rounded-2xl flex items-center justify-center text-cyan-600 shadow-inner">
+                    <i class="ph-fill ph-puzzle-piece text-3xl"></i>
+                </div>
+                <h2 class="text-2xl md:text-3xl font-bold dark:text-white">3. Khó Thích Nghi <span
+                        class="text-cyan-600">Môn Học Tích Hợp</span></h2>
+            </div>
+            <div class="text-gray-600 dark:text-gray-300 text-lg leading-relaxed">
+                <p>Các môn tích hợp (Khoa học tự nhiên, Lịch sử & Địa lý) là thách thức lớn khi học sinh đã quen tư duy
+                    theo từng môn riêng lẻ. Việc kết nối kiến thức liên môn đòi hỏi tư duy hệ thống mà nhiều em chưa
+                    được rèn luyện.</p>
+            </div>
+        </div>
+
+        <!-- 4. Áp lực phương pháp mới -->
+        <div class="glass-card p-8 md:p-10 rounded-[2.5rem] reveal">
+            <div class="flex items-center gap-4 mb-6">
+                <div
+                    class="w-14 h-14 bg-pink-100 dark:bg-pink-900/30 rounded-2xl flex items-center justify-center text-pink-500 shadow-inner">
+                    <i class="ph-fill ph-presentation-chart text-3xl"></i>
+                </div>
+                <h2 class="text-2xl md:text-3xl font-bold dark:text-white">4. Áp Lực Từ <span
+                        class="text-pink-500">Phương Pháp Học Mới</span></h2>
+            </div>
+            <div class="text-gray-600 dark:text-gray-300 text-lg leading-relaxed space-y-3">
+                <p>Học nhóm, dự án, thuyết trình trước lớp — những phương pháp dạy học tích cực yêu cầu kỹ năng mềm mà
+                    không phải học sinh nào cũng tự tin.</p>
+                <p>Một số em nhút nhát hoặc thiếu kỹ năng giao tiếp cảm thấy bị áp lực lớn, ảnh hưởng đến cả kết quả học
+                    tập và sức khỏe tinh thần.</p>
+            </div>
+        </div>
+
+        <!-- 5. Đánh giá năng lực chưa đồng nhất -->
+        <div class="glass-card p-8 md:p-10 rounded-[2.5rem] reveal">
+            <div class="flex items-center gap-4 mb-6">
+                <div
+                    class="w-14 h-14 bg-emerald-100 dark:bg-emerald-900/30 rounded-2xl flex items-center justify-center text-emerald-600 shadow-inner">
+                    <i class="ph-fill ph-scales text-3xl"></i>
+                </div>
+                <h2 class="text-2xl md:text-3xl font-bold dark:text-white">5. Đánh Giá Năng Lực <span
+                        class="text-emerald-600">Chưa Đồng Nhất</span></h2>
+            </div>
+            <div class="text-gray-600 dark:text-gray-300 text-lg leading-relaxed">
+                <p>Chuyển sang đánh giá theo năng lực nhưng tiêu chí chưa rõ ràng, chưa thống nhất giữa các trường/địa
+                    phương (NORRAG Education, 2023). Học sinh không biết mình cần đạt những gì, giáo viên thiếu công cụ
+                    đánh giá chuẩn hóa.</p>
+            </div>
+        </div>
+
+        <!-- Divider -->
+        <div class="text-center py-8">
+            <span
+                class="inline-block bg-ns-purple/10 text-ns-purple font-black text-xs uppercase tracking-widest px-6 py-2 rounded-full">Những
+                Thách Thức Bổ Sung</span>
+        </div>
+
+        <!-- 6. Chênh lệch điều kiện số -->
+        <div class="glass-card p-8 md:p-10 rounded-[2.5rem] reveal">
+            <div class="flex items-center gap-4 mb-6">
+                <div
+                    class="w-14 h-14 bg-red-100 dark:bg-red-900/30 rounded-2xl flex items-center justify-center text-red-500 shadow-inner">
+                    <i class="ph-fill ph-wifi-slash text-3xl"></i>
+                </div>
+                <h2 class="text-2xl md:text-3xl font-bold dark:text-white">6. <span class="text-red-500">Chênh Lệch Điều
+                        Kiện Số</span> (Digital Divide)</h2>
+            </div>
+            <div class="text-gray-600 dark:text-gray-300 text-lg leading-relaxed space-y-3">
+                <p>Không phải học sinh nào cũng có máy tính, internet ổn định, hay không gian học tập phù hợp. Khoảng
+                    cách số giữa thành thị và nông thôn, giữa gia đình có điều kiện và khó khăn tạo ra bất bình đẳng
+                    trong tiếp cận giáo dục số.</p>
+                <p class="text-sm italic text-gray-400">[Cần bổ sung số liệu: Tỉ lệ học sinh THPT có máy tính cá
+                    nhân/internet ổn định tại các khu vực khác nhau.]</p>
+            </div>
+        </div>
+
+        <!-- 7. Quá tải thông tin -->
+        <div class="glass-card p-8 md:p-10 rounded-[2.5rem] reveal">
+            <div class="flex items-center gap-4 mb-6">
+                <div
+                    class="w-14 h-14 bg-amber-100 dark:bg-amber-900/30 rounded-2xl flex items-center justify-center text-amber-600 shadow-inner">
+                    <i class="ph-fill ph-brain text-3xl"></i>
+                </div>
+                <h2 class="text-2xl md:text-3xl font-bold dark:text-white">7. <span class="text-amber-600">Quá Tải Thông
+                        Tin</span> & Phân Tán Nội Dung</h2>
+            </div>
+            <div class="text-gray-600 dark:text-gray-300 text-lg leading-relaxed">
+                <p>Khối lượng kiến thức lớn cùng với sự phân tán tài liệu trên nhiều nền tảng (SGK, website, video, app)
+                    khiến học sinh khó chọn lọc và tổng hợp thông tin. Hiện tượng "information overload" dẫn đến tê liệt
+                    quyết định — không biết bắt đầu học từ đâu.</p>
+            </div>
+        </div>
+
+        <!-- 8. Lựa chọn tổ hợp môn -->
+        <div class="glass-card p-8 md:p-10 rounded-[2.5rem] reveal">
+            <div class="flex items-center gap-4 mb-6">
+                <div
+                    class="w-14 h-14 bg-indigo-100 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center text-indigo-600 shadow-inner">
+                    <i class="ph-fill ph-signpost text-3xl"></i>
+                </div>
+                <h2 class="text-2xl md:text-3xl font-bold dark:text-white">8. <span class="text-indigo-600">Lựa Chọn Tổ
+                        Hợp Môn</span> & Định Hướng Nghề</h2>
+            </div>
+            <div class="text-gray-600 dark:text-gray-300 text-lg leading-relaxed space-y-3">
+                <p>GDPT 2018 cho phép học sinh lựa chọn tổ hợp môn từ lớp 10, nhưng nhiều em chưa đủ trải nghiệm để
+                    quyết định đúng. Quyết định sai có thể dẫn đến mất động lực, phải đổi tổ hợp giữa chừng, hoặc chọn
+                    sai định hướng nghề nghiệp.</p>
+                <p class="text-sm italic text-gray-400">[Cần bổ sung số liệu: Tỉ lệ học sinh đổi tổ hợp môn sau khi chọn
+                    ban đầu.]</p>
+            </div>
+        </div>
+
+        <!-- 9. Thiếu phản hồi cá nhân hóa -->
+        <div class="glass-card p-8 md:p-10 rounded-[2.5rem] reveal">
+            <div class="flex items-center gap-4 mb-6">
+                <div
+                    class="w-14 h-14 bg-teal-100 dark:bg-teal-900/30 rounded-2xl flex items-center justify-center text-teal-600 shadow-inner">
+                    <i class="ph-fill ph-user-focus text-3xl"></i>
+                </div>
+                <h2 class="text-2xl md:text-3xl font-bold dark:text-white">9. Thiếu <span class="text-teal-600">Phản Hồi
+                        Cá Nhân Hóa</span></h2>
+            </div>
+            <div class="text-gray-600 dark:text-gray-300 text-lg leading-relaxed">
+                <p>Với sĩ số lớp đông (thường 40–50 em), giáo viên khó có thể cung cấp phản hồi chi tiết cho từng học
+                    sinh. Thiếu phản hồi kịp thời khiến các em không biết mình sai ở đâu, cần cải thiện gì, dẫn đến lặp
+                    lại lỗi và mất dần tự tin.</p>
+            </div>
+        </div>
+
+        <!-- 10. Kỹ năng tìm nguồn chuẩn -->
+        <div class="glass-card p-8 md:p-10 rounded-[2.5rem] reveal">
+            <div class="flex items-center gap-4 mb-6">
+                <div
+                    class="w-14 h-14 bg-violet-100 dark:bg-violet-900/30 rounded-2xl flex items-center justify-center text-violet-600 shadow-inner">
+                    <i class="ph-fill ph-magnifying-glass text-3xl"></i>
+                </div>
+                <h2 class="text-2xl md:text-3xl font-bold dark:text-white">10. Thiếu <span class="text-violet-600">Kỹ
+                        Năng Tìm Nguồn Chuẩn</span></h2>
+            </div>
+            <div class="text-gray-600 dark:text-gray-300 text-lg leading-relaxed space-y-3">
+                <p>Trong kỷ nguyên AI, học sinh dễ dàng tìm được thông tin nhưng khó phân biệt nguồn đáng tin. Kỹ năng
+                    đánh giá nguồn tin (source evaluation), phân biệt tin giả (fake news) và nguồn học thuật vẫn chưa
+                    được dạy một cách hệ thống.</p>
+                <p>Việc sử dụng AI (ChatGPT, Gemini...) không đúng cách — sao chép nguyên văn thay vì tư duy — cũng là
+                    thách thức mới.</p>
+            </div>
+        </div>
+
+        <!-- CTA -->
+        <section class="mt-16 text-center reveal">
+            <div class="glass-card max-w-3xl mx-auto p-10 rounded-[3rem] border-2 border-ns-purple/20">
+                <h2 class="text-2xl font-bold mb-4 dark:text-white">Đã nhận diện thách thức — giờ là lúc hành động! 🚀
+                </h2>
+                <p class="text-gray-500 dark:text-gray-400 mb-8">Khám phá các giải pháp và phương pháp tự học có cơ sở
+                    khoa học.</p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="giaiphap.html"
+                        class="hero-gradient text-white px-8 py-3 rounded-xl font-bold shadow-xl">Xem Giải pháp <i
+                            class="ph-bold ph-arrow-right ml-1"></i></a>
+                    <a href="assessment.html"
+                        class="bg-white dark:bg-slate-800 text-ns-purple border-2 border-ns-purple px-8 py-3 rounded-xl font-bold">Đánh
+                        giá năng lực tự học</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center mt-24 text-gray-400 dark:text-gray-600 text-sm pb-10">
+        <div class="flex justify-center items-center gap-2 mb-4">
+            <i class="ph-fill ph-sparkle text-2xl text-ns-purple"></i>
+            <span class="font-bold text-slate-800 dark:text-white uppercase tracking-wider">AITECH</span>
+        </div>
+        <p class="mt-1">Dành cho học sinh THPT Việt Nam — 2026</p>
+    </footer>
+</body>
+
+</html>

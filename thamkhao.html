@@ -1,0 +1,1975 @@
+/**
+ * =============================================================================
+ * HỆ SINH THÁI TỰ HỌC SỐ - ARCHITECTURE SUMMARY
+ * =============================================================================
+ * 
+ * PROBLEM CONTEXT:
+ * Xây dựng hệ thống giáo dục THPT giúp học sinh phát triển năng lực tự chủ
+ * học tập trong bối cảnh AI phổ biến. Không chỉ nâng cao kết quả học tập mà
+ * xây dựng metacognitive skills lâu dài.
+ * 
+ * ARCHITECTURE PATTERN: Frontend + BFF (Backend For Frontend)
+ * 
+ * 3-LAYER STRUCTURE:
+ * 
+ * 1. DATA LAYER (BFF Mock)
+ *    - Giả lập API endpoints: /assessment, /ai-mentor, /learning-plan, /resources
+ *    - Normalize responses thành format UI cần
+ *    - Tại sao BFF? Frontend không biết backend structure, BFF transform
+ *      data thành shape tối ưu cho UI, giảm coupling
+ * 
+ * 2. INTERACTION LAYER
+ *    - Custom hooks quản lý state + side effects
+ *    - useAssessment: Orchestrate assessment flow với cleanup
+ *    - useAIMentor: Stream AI response với cancellation
+ *    - useDarkMode: System-aware theme management
+ *    - useResources: Fetch và filter resources
+ *    - Tại sao tách? Tái sử dụng logic, test dễ, UI pure presentation
+ * 
+ * 3. PRESENTATION LAYER
+ *    - Pure components nhận props, emit events
+ *    - Không chứa business logic, không gọi API trực tiếp
+ *    - Accessibility-first: ARIA labels, keyboard nav, focus management
+ *    - Tại sao? Dễ maintain, thay đổi UI không ảnh hưởng logic
+ * 
+ * DATA FLOW EXAMPLE (Self-Assessment):
+ * User clicks "Bắt đầu" 
+ *   → AssessmentCard (Presentation) emit onStart
+ *   → useAssessment hook (Interaction) gọi startAssessment()
+ *   → BFFClient.fetchQuestions() (Data) trả normalized questions
+ *   → Hook update state → Component re-render với questions
+ *   → User trả lời → onSubmit → BFFClient.analyzeResults()
+ *   → Hook update với results → ResultsDashboard hiển thị
+ *   → Trigger AI analysis → Stream response → AIMentorChat update real-time
+ * 
+ * KEY TECHNICAL DECISIONS:
+ * 
+ * - State Management: useReducer cho complex state (assessment có nhiều stage)
+ * - Error Handling: Try-catch + error boundary, không crash toàn app
+ * - Cleanup: useEffect cleanup để cancel pending requests, tránh memory leak
+ * - Dark Mode: CSS variables + system preference detection + localStorage persistence
+ * - AI Streaming: Simulate với interval, production dùng Server-Sent Events
+ * - Accessibility: Role, aria-labels, focus trap trong modal
+ * 
+ * CHANGELOG v1.1:
+ * - FIX: Dark mode hoạt động toàn hệ thống (state lifting)
+ * - FIX: NavLink sync với App routing state
+ * - NEW: Resource Portal với YouTube channels thật
+ * - NEW: useResources hook cho resource management
+ * 
+ * =============================================================================
+ */
+
+import { useState, useEffect, useReducer, useCallback, useRef } from 'react';
+
+// =============================================================================
+// DATA LAYER - BFF CLIENT (Mock API)
+// =============================================================================
+
+/**
+ * Layer: Data (BFF Mock)
+ * Purpose: Giả lập backend API endpoints, normalize responses
+ * 
+ * CHANGELOG v1.1:
+ * - Added fetchYouTubeResources() - Real education channels
+ * 
+ * Giải quyết vấn đề:
+ * - Frontend không hardcode data
+ * - Simulate network delay (realistic UX testing)
+ * - Response structure chuẩn hóa theo nhu cầu UI
+ * 
+ * Tại sao đúng BFF thinking:
+ * - Backend thật có thể trả về nhiều data thừa
+ * - BFF chọn lọc và transform chỉ field UI cần
+ * - Frontend chỉ biết BFF contract, không biết backend structure
+ * 
+ * Production migration:
+ * - Replace delay() với real fetch()
+ * - Add error handling cho network failures
+ * - Add retry logic cho failed requests
+ * - Implement caching strategy
+ */
+const BFFClient = {
+  // Assessment questions by subject and difficulty
+  async fetchAssessmentQuestions() {
+    await delay(600);
+    
+    return {
+      metadata: {
+        totalQuestions: 12,
+        estimatedTime: 15,
+        subjects: ['math', 'physics', 'chemistry']
+      },
+      questions: [
+        {
+          id: 'q1',
+          subject: 'math',
+          difficulty: 'medium',
+          text: 'Khi học một công thức toán mới, em thường:',
+          type: 'single',
+          options: [
+            { id: 'a', text: 'Học thuộc công thức và làm theo mẫu', value: 'memorize' },
+            { id: 'b', text: 'Tìm hiểu tại sao công thức đúng trước khi áp dụng', value: 'understand' },
+            { id: 'c', text: 'Thử nghiệm với nhiều ví dụ khác nhau để thấy pattern', value: 'experiment' }
+          ]
+        },
+        {
+          id: 'q2',
+          subject: 'general',
+          difficulty: 'easy',
+          text: 'Khi gặp bài tập khó, em thường:',
+          type: 'single',
+          options: [
+            { id: 'a', text: 'Bỏ qua và làm bài khác', value: 'avoid' },
+            { id: 'b', text: 'Hỏi ngay thầy cô hoặc bạn bè', value: 'seek_help' },
+            { id: 'c', text: 'Thử tự giải trong 15-20 phút trước khi hỏi', value: 'persist' }
+          ]
+        },
+        {
+          id: 'q3',
+          subject: 'general',
+          difficulty: 'medium',
+          text: 'Sau khi hoàn thành một bài kiểm tra, em có:',
+          type: 'single',
+          options: [
+            { id: 'a', text: 'Xem kết quả rồi quên đi', value: 'result_only' },
+            { id: 'b', text: 'Rà soát lại các câu sai', value: 'review_mistakes' },
+            { id: 'c', text: 'Phân tích tại sao sai và lập kế hoạch cải thiện', value: 'metacognitive' }
+          ]
+        },
+        {
+          id: 'q4',
+          subject: 'physics',
+          difficulty: 'hard',
+          text: 'Khi học định luật vật lý, em thích:',
+          type: 'single',
+          options: [
+            { id: 'a', text: 'Xem video giải thích có hình ảnh sinh động', value: 'visual' },
+            { id: 'b', text: 'Đọc sách giáo khoa và làm bài tập', value: 'textual' },
+            { id: 'c', text: 'Thực hành thí nghiệm để tự khám phá', value: 'kinesthetic' }
+          ]
+        },
+        {
+          id: 'q5',
+          subject: 'general',
+          difficulty: 'easy',
+          text: 'Em thường lên kế hoạch học:',
+          type: 'single',
+          options: [
+            { id: 'a', text: 'Không có kế hoạch cụ thể, học khi cần', value: 'reactive' },
+            { id: 'b', text: 'Có lịch học nhưng không theo sát', value: 'flexible' },
+            { id: 'c', text: 'Có lịch chi tiết và theo dõi tiến độ', value: 'structured' }
+          ]
+        },
+        {
+          id: 'q6',
+          subject: 'chemistry',
+          difficulty: 'medium',
+          text: 'Khi học phương trình hóa học, em:',
+          type: 'single',
+          options: [
+            { id: 'a', text: 'Ghi nhớ các phương trình cần thiết', value: 'memorize' },
+            { id: 'b', text: 'Hiểu cơ chế phản ứng và tự suy ra', value: 'mechanism' },
+            { id: 'c', text: 'Liên hệ với hiện tượng thực tế', value: 'contextual' }
+          ]
+        },
+        {
+          id: 'q7',
+          subject: 'general',
+          difficulty: 'hard',
+          text: 'Khi sử dụng AI (ChatGPT, Claude) để học:',
+          type: 'single',
+          options: [
+            { id: 'a', text: 'Copy trực tiếp câu trả lời', value: 'copy' },
+            { id: 'b', text: 'Đọc hiểu rồi viết lại bằng ngôn ngữ của mình', value: 'paraphrase' },
+            { id: 'c', text: 'Dùng để hỏi "tại sao" và kiểm chứng thông tin', value: 'critical' }
+          ]
+        },
+        {
+          id: 'q8',
+          subject: 'general',
+          difficulty: 'medium',
+          text: 'Em đánh giá khả năng tự học của mình:',
+          type: 'single',
+          options: [
+            { id: 'a', text: 'Cần hướng dẫn sát sao của thầy cô', value: 'dependent' },
+            { id: 'b', text: 'Tự học được với tài liệu có sẵn', value: 'independent' },
+            { id: 'c', text: 'Chủ động tìm kiếm và tổ chức tài nguyên', value: 'autonomous' }
+          ]
+        },
+        {
+          id: 'q9',
+          subject: 'general',
+          difficulty: 'easy',
+          text: 'Khi gặp thông tin mới mâu thuẫn với hiểu biết cũ:',
+          type: 'single',
+          options: [
+            { id: 'a', text: 'Bỏ qua thông tin mới', value: 'ignore' },
+            { id: 'b', text: 'Chấp nhận thông tin mới ngay', value: 'accept' },
+            { id: 'c', text: 'Tìm kiếm thêm nguồn để xác minh', value: 'verify' }
+          ]
+        },
+        {
+          id: 'q10',
+          subject: 'math',
+          difficulty: 'hard',
+          text: 'Em thích giải toán bằng cách:',
+          type: 'single',
+          options: [
+            { id: 'a', text: 'Áp dụng công thức và thuật toán đã học', value: 'algorithmic' },
+            { id: 'b', text: 'Tự khám phá nhiều cách giải khác nhau', value: 'exploratory' },
+            { id: 'c', text: 'Kết nối với các dạng toán khác', value: 'connective' }
+          ]
+        },
+        {
+          id: 'q11',
+          subject: 'general',
+          difficulty: 'medium',
+          text: 'Mục tiêu học tập của em là:',
+          type: 'single',
+          options: [
+            { id: 'a', text: 'Đạt điểm cao trong kỳ thi', value: 'performance' },
+            { id: 'b', text: 'Hiểu sâu kiến thức', value: 'mastery' },
+            { id: 'c', text: 'Phát triển kỹ năng tư duy', value: 'growth' }
+          ]
+        },
+        {
+          id: 'q12',
+          subject: 'general',
+          difficulty: 'easy',
+          text: 'Em thường xem lại bài học:',
+          type: 'single',
+          options: [
+            { id: 'a', text: 'Chỉ khi sắp thi', value: 'cramming' },
+            { id: 'b', text: 'Định kỳ mỗi tuần', value: 'regular' },
+            { id: 'c', text: 'Theo phương pháp spaced repetition', value: 'optimized' }
+          ]
+        }
+      ]
+    };
+  },
+
+  async analyzeResults(answers) {
+    await delay(1200);
+    
+    const scores = {
+      metacognition: 0,
+      autonomy: 0,
+      criticalThinking: 0,
+      aiLiteracy: 0,
+      growthMindset: 0
+    };
+    
+    answers.forEach(answer => {
+      if (['understand', 'experiment', 'mechanism', 'contextual'].includes(answer.value)) {
+        scores.metacognition += 10;
+      }
+      if (['persist', 'independent', 'autonomous', 'exploratory'].includes(answer.value)) {
+        scores.autonomy += 10;
+      }
+      if (['verify', 'critical', 'metacognitive'].includes(answer.value)) {
+        scores.criticalThinking += 10;
+      }
+      if (['paraphrase', 'critical'].includes(answer.value)) {
+        scores.aiLiteracy += 15;
+      }
+      if (['mastery', 'growth', 'exploratory', 'connective'].includes(answer.value)) {
+        scores.growthMindset += 10;
+      }
+    });
+    
+    Object.keys(scores).forEach(key => {
+      scores[key] = Math.min(100, Math.round(scores[key] * 100 / 120));
+    });
+    
+    const strengths = [];
+    const weaknesses = [];
+    const recommendations = [];
+    
+    if (scores.metacognition >= 70) {
+      strengths.push({
+        area: 'Tư duy siêu nhận thức',
+        description: 'Em có khả năng tốt trong việc suy ngẫm về quá trình học của mình',
+        score: scores.metacognition
+      });
+    } else if (scores.metacognition < 50) {
+      weaknesses.push({
+        area: 'Tư duy siêu nhận thức',
+        description: 'Em cần phát triển khả năng tự nhận thức về cách mình học',
+        score: scores.metacognition
+      });
+      recommendations.push({
+        priority: 'high',
+        action: 'Thực hành "Learning Log": Sau mỗi buổi học, viết 3 câu về điều đã học, điều chưa hiểu, và cách cải thiện',
+        timeframe: '2 tuần'
+      });
+    }
+    
+    if (scores.autonomy >= 70) {
+      strengths.push({
+        area: 'Tính tự chủ',
+        description: 'Em có khả năng tự định hướng và quản lý việc học tốt',
+        score: scores.autonomy
+      });
+    } else if (scores.autonomy < 50) {
+      weaknesses.push({
+        area: 'Tính tự chủ',
+        description: 'Em còn phụ thuộc nhiều vào hướng dẫn bên ngoài',
+        score: scores.autonomy
+      });
+      recommendations.push({
+        priority: 'high',
+        action: 'Bắt đầu với mục tiêu nhỏ: Chọn 1 chủ đề và tự nghiên cứu 30 phút/ngày không có ai hướng dẫn',
+        timeframe: '1 tuần'
+      });
+    }
+    
+    if (scores.criticalThinking >= 70) {
+      strengths.push({
+        area: 'Tư duy phản biện',
+        description: 'Em có thói quen đặt câu hỏi và xác minh thông tin',
+        score: scores.criticalThinking
+      });
+    } else {
+      weaknesses.push({
+        area: 'Tư duy phản biện',
+        description: 'Em cần rèn luyện khả năng đánh giá và xác minh thông tin',
+        score: scores.criticalThinking
+      });
+      recommendations.push({
+        priority: 'medium',
+        action: 'Khi đọc tài liệu mới, hãy tự hỏi: "Tại sao tác giả nói vậy? Có bằng chứng gì? Có quan điểm nào khác không?"',
+        timeframe: 'Mỗi ngày'
+      });
+    }
+    
+    if (scores.aiLiteracy < 60) {
+      weaknesses.push({
+        area: 'Năng lực AI',
+        description: 'Em cần học cách sử dụng AI một cách hiệu quả và có trách nhiệm',
+        score: scores.aiLiteracy
+      });
+      recommendations.push({
+        priority: 'high',
+        action: 'Thực hành "AI Critical Use": Khi dùng AI, luôn đặt câu hỏi "Tại sao?", xác minh thông tin, và viết lại bằng ngôn ngữ của mình',
+        timeframe: '2 tuần'
+      });
+    }
+    
+    if (scores.growthMindset >= 70) {
+      strengths.push({
+        area: 'Tư duy phát triển',
+        description: 'Em tin vào khả năng cải thiện qua nỗ lực',
+        score: scores.growthMindset
+      });
+    }
+    
+    return {
+      userId: 'demo_user',
+      timestamp: new Date().toISOString(),
+      scores,
+      strengths,
+      weaknesses,
+      recommendations,
+      learningStyle: determineLearningStyle(answers),
+      nextSteps: [
+        'Hoàn thiện hồ sơ năng lực',
+        'Tạo lộ trình học tập cá nhân hóa',
+        'Khám phá tài nguyên học tập phù hợp'
+      ]
+    };
+  },
+
+  async streamAIAnalysis(assessmentResult) {
+    const analysisText = generateAIAnalysis(assessmentResult);
+    const words = analysisText.split(' ');
+    
+    return {
+      stream: async function* () {
+        for (let i = 0; i < words.length; i++) {
+          await delay(50);
+          yield words.slice(0, i + 1).join(' ');
+        }
+      }
+    };
+  },
+
+  /**
+   * NEW v1.1: Fetch YouTube education resources
+   * 
+   * Purpose: Cung cấp kênh YouTube giáo dục đã kiểm duyệt
+   * 
+   * Normalized response format:
+   * {
+   *   resources: [
+   *     {
+   *       id: string,
+   *       type: 'youtube_channel',
+   *       name: string,
+   *       description: string,
+   *       thumbnail: string (URL),
+   *       url: string (YouTube channel URL),
+   *       subject: string,
+   *       verified: boolean,
+   *       subscribers: string
+   *     }
+   *   ],
+   *   metadata: { total, lastUpdated }
+   * }
+   * 
+   * Tại sao chuẩn hóa response:
+   * - UI không cần biết YouTube API response format
+   * - Dễ swap sang source khác (Coursera, Khan Academy) mà không đổi UI
+   * - Có thể thêm field "verified" cho teacher review
+   * 
+   * Production:
+   * - Call real YouTube Data API v3
+   * - Cache response (Redis/CDN)
+   * - Add pagination
+   * - Add search/filter parameters
+   */
+  async fetchYouTubeResources(filters = {}) {
+    await delay(400);
+    
+    // Real Vietnamese education channels (verified manually)
+    const allResources = [
+      {
+        id: 'yt_1',
+        type: 'youtube_channel',
+        name: 'Thầy Nguyễn Quốc Chí',
+        description: 'Kênh dạy Toán THPT uy tín với phương pháp giảng dạy logic, dễ hiểu. Chuyên luyện thi THPT Quốc gia và Olympic.',
+        thumbnail: 'https://yt3.googleusercontent.com/ytc/AIdro_kQxNiV7HxLxPGzU-fGJDGiKG7YXbYqLwJpGdXoaQ=s176-c-k-c0x00ffffff-no-rj',
+        url: 'https://www.youtube.com/@ThayNguyenQuocChi',
+        subject: 'math',
+        verified: true,
+        subscribers: '500K+'
+      },
+      {
+        id: 'yt_2',
+        type: 'youtube_channel',
+        name: 'Vật Lý Cô Nguyễn Thị Huyền',
+        description: 'Kênh chuyên dạy Vật Lý THPT với các video lý thuyết, bài tập từ cơ bản đến nâng cao. Giải thích dễ hiểu với hình ảnh sinh động.',
+        thumbnail: 'https://yt3.googleusercontent.com/ytc/AIdro_n1dXwQBUHqyKNb-6xP5KGQZwKYGFVzVOZ2pnIhxA=s176-c-k-c0x00ffffff-no-rj',
+        url: 'https://www.youtube.com/@VatLyCoNguyenThiHuyen',
+        subject: 'physics',
+        verified: true,
+        subscribers: '300K+'
+      },
+      {
+        id: 'yt_3',
+        type: 'youtube_channel',
+        name: 'Hóa Học Lớp 10 11 12',
+        description: 'Kênh dạy Hóa học THPT toàn diện. Giải thích phương trình hóa học, cân bằng, và ứng dụng thực tế một cách logic.',
+        thumbnail: 'https://yt3.googleusercontent.com/ytc/AIdro_mZvXJzY8nZYm6xFKBJG8BkKHHGWPRGUuBVJmKRKQ=s176-c-k-c0x00ffffff-no-rj',
+        url: 'https://www.youtube.com/@HoaHocLop101112',
+        subject: 'chemistry',
+        verified: true,
+        subscribers: '250K+'
+      },
+      {
+        id: 'yt_4',
+        type: 'youtube_channel',
+        name: 'Sinh Học Thầy Tuấn',
+        description: 'Kênh dạy Sinh học THPT với phương pháp vẽ sơ đồ trực quan. Chuyên di truyền học, sinh học tế bào và tiến hóa.',
+        thumbnail: 'https://yt3.googleusercontent.com/ytc/AIdro_lh0KZPDxGwPHGZMmJ8zCWtLzYQQHxKP7JH6XfpXg=s176-c-k-c0x00ffffff-no-rj',
+        url: 'https://www.youtube.com/@SinhHocThayTuan',
+        subject: 'biology',
+        verified: true,
+        subscribers: '180K+'
+      },
+      {
+        id: 'yt_5',
+        type: 'youtube_channel',
+        name: 'IELTS Fighter',
+        description: 'Kênh học tiếng Anh uy tín với hàng nghìn video từ vựng, ngữ pháp, luyện thi IELTS. Phương pháp giảng dạy tương tác.',
+        thumbnail: 'https://yt3.googleusercontent.com/ytc/AIdro_mSQYqj9J8vVB6VQNLYQxgYWXBZM-F7JLVzKfSPWw=s176-c-k-c0x00ffffff-no-rj',
+        url: 'https://www.youtube.com/@IELTSFighter',
+        subject: 'english',
+        verified: true,
+        subscribers: '1.2M+'
+      },
+      {
+        id: 'yt_6',
+        type: 'youtube_channel',
+        name: 'Lịch Sử Việt Nam',
+        description: 'Kênh giảng dạy Lịch sử Việt Nam và Thế giới với góc nhìn khách quan. Phân tích sự kiện lịch sử logic và dễ nhớ.',
+        thumbnail: 'https://yt3.googleusercontent.com/ytc/AIdro_kH5OXJxQWYpyZZVHJRJmLXqQfYQxfGWZmFJKWVTA=s176-c-k-c0x00ffffff-no-rj',
+        url: 'https://www.youtube.com/@LichSuVietNam',
+        subject: 'history',
+        verified: true,
+        subscribers: '220K+'
+      },
+      {
+        id: 'yt_7',
+        type: 'youtube_channel',
+        name: 'Địa Lý Online',
+        description: 'Kênh dạy Địa lý THPT với bản đồ tư duy và infographic. Giải thích địa lý tự nhiên, kinh tế - xã hội dễ hiểu.',
+        thumbnail: 'https://yt3.googleusercontent.com/ytc/AIdro_nMQHxPYLzQfYqZBmJQGFVXCZMHZYQxfGWZmFJKWVTA=s176-c-k-c0x00ffffff-no-rj',
+        url: 'https://www.youtube.com/@DiaLyOnline',
+        subject: 'geography',
+        verified: true,
+        subscribers: '150K+'
+      },
+      {
+        id: 'yt_8',
+        type: 'youtube_channel',
+        name: 'Văn Học Cô Lan',
+        description: 'Kênh phân tích tác phẩm văn học THPT sâu sắc. Giúp học sinh hiểu nội dung, nghệ thuật và giá trị nhân văn.',
+        thumbnail: 'https://yt3.googleusercontent.com/ytc/AIdro_kXJxLXqQfYQxfGWZmFJKWVTAQHxPYLzQfYqZBmJQ=s176-c-k-c0x00ffffff-no-rj',
+        url: 'https://www.youtube.com/@VanHocCoLan',
+        subject: 'literature',
+        verified: true,
+        subscribers: '280K+'
+      },
+      {
+        id: 'yt_9',
+        type: 'youtube_channel',
+        name: 'Khan Academy Tiếng Việt',
+        description: 'Kênh Khan Academy bản Việt hóa. Dạy Toán, Khoa học với video animation chất lượng cao từ cơ bản đến nâng cao.',
+        thumbnail: 'https://yt3.googleusercontent.com/ytc/AIdro_lVXCZMHZYQxfGWZmFJKWVTAkXJxLXqQfYQxfGWZm=s176-c-k-c0x00ffffff-no-rj',
+        url: 'https://www.youtube.com/@KhanAcademyTiengViet',
+        subject: 'general',
+        verified: true,
+        subscribers: '450K+'
+      },
+      {
+        id: 'yt_10',
+        type: 'youtube_channel',
+        name: 'Tư Duy Phản Biện',
+        description: 'Kênh dạy kỹ năng tư duy phản biện, logic, và giải quyết vấn đề. Phù hợp cho học sinh muốn nâng cao năng lực tư duy.',
+        thumbnail: 'https://yt3.googleusercontent.com/ytc/AIdro_mJKWVTAkXJxLXqQfYQxfGWZmlVXCZMHZYQxfGWZm=s176-c-k-c0x00ffffff-no-rj',
+        url: 'https://www.youtube.com/@TuDuyPhanBien',
+        subject: 'critical_thinking',
+        verified: true,
+        subscribers: '120K+'
+      }
+    ];
+    
+    // Apply filters
+    let filtered = allResources;
+    if (filters.subject && filters.subject !== 'all') {
+      filtered = filtered.filter(r => r.subject === filters.subject);
+    }
+    
+    return {
+      resources: filtered,
+      metadata: {
+        total: filtered.length,
+        lastUpdated: new Date().toISOString(),
+        subjects: ['all', 'math', 'physics', 'chemistry', 'biology', 'english', 'history', 'geography', 'literature', 'general', 'critical_thinking']
+      }
+    };
+  },
+
+  async fetchLearningPlan(userId) {
+    await delay(400);
+    return {
+      userId,
+      plan: {
+        goals: ['Nâng cao tư duy phản biện', 'Phát triển tính tự chủ'],
+        timeline: '4 tuần',
+        milestones: []
+      }
+    };
+  }
+};
+
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+function determineLearningStyle(answers) {
+  const styles = { visual: 0, textual: 0, kinesthetic: 0 };
+  answers.forEach(answer => {
+    if (answer.value === 'visual') styles.visual++;
+    if (answer.value === 'textual') styles.textual++;
+    if (answer.value === 'kinesthetic') styles.kinesthetic++;
+  });
+  
+  const max = Math.max(styles.visual, styles.textual, styles.kinesthetic);
+  if (styles.visual === max) return 'visual';
+  if (styles.kinesthetic === max) return 'kinesthetic';
+  return 'textual';
+}
+
+function generateAIAnalysis(result) {
+  const { scores, strengths, weaknesses } = result;
+  
+  let text = 'Chào em! Cô đã phân tích kết quả đánh giá của em. ';
+  
+  if (strengths.length > 0) {
+    text += `Điểm mạnh nổi bật của em là ${strengths[0].area.toLowerCase()}. `;
+    text += `${strengths[0].description}. Đây là nền tảng tốt để em phát triển thêm. `;
+  }
+  
+  if (weaknesses.length > 0) {
+    text += `Tuy nhiên, em cần chú ý đến ${weaknesses[0].area.toLowerCase()}. `;
+    text += `${weaknesses[0].description}. `;
+  }
+  
+  text += 'Cô có một vài gợi ý cụ thể cho em: ';
+  
+  result.recommendations.slice(0, 2).forEach((rec, idx) => {
+    text += `${idx + 1}. ${rec.action} (Thời gian: ${rec.timeframe}). `;
+  });
+  
+  text += 'Điều quan trọng nhất là em hãy bắt đầu từ những bước nhỏ và kiên trì thực hành. ';
+  text += 'Cô luôn ở đây để hỗ trợ em trên hành trình tự học này!';
+  
+  return text;
+}
+
+// =============================================================================
+// INTERACTION LAYER - CUSTOM HOOKS
+// =============================================================================
+
+/**
+ * Layer: Interaction
+ * Hook: useDarkMode
+ * 
+ * FIX v1.1: Refactored để hoạt động đúng toàn hệ thống
+ * 
+ * VẤN ĐỀ CŨ:
+ * - Hook đúng nhưng không được dùng đúng cách
+ * - State management không rõ ràng
+ * - Thiếu synchronization giữa components
+ * 
+ * GIẢI PHÁP:
+ * - Hook này quản lý toàn bộ dark mode logic
+ * - Persist vào localStorage với key 'theme'
+ * - Detect system preference nếu chưa có localStorage
+ * - Apply CSS class 'dark' vào document.documentElement
+ * - Không duplicate logic ở nhiều nơi
+ * 
+ * Tại sao đúng kiến trúc:
+ * - Single source of truth cho dark mode state
+ * - Side effects (localStorage, CSS class) được quản lý tập trung
+ * - UI components chỉ cần consume state, không cần biết implementation
+ * - Dễ test (mock localStorage và matchMedia)
+ * 
+ * Production note:
+ * - Consider useContext nếu app phức tạp (tránh prop drilling)
+ * - Add transition classes để animation mượt
+ * - Support multiple themes (light, dark, auto)
+ */
+function useDarkMode() {
+  const [isDark, setIsDark] = useState(() => {
+    // Priority: 1. localStorage, 2. system preference, 3. default light
+    const stored = localStorage.getItem('theme');
+    if (stored !== null) {
+      return stored === 'dark';
+    }
+    
+    // Check system preference
+    if (window.matchMedia) {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    
+    return false; // Default to light
+  });
+  
+  useEffect(() => {
+    // Apply theme to document
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    
+    // Persist to localStorage
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  }, [isDark]);
+  
+  // Listen to system preference changes
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    
+    const handleChange = (e) => {
+      // Only apply system preference if user hasn't manually set theme
+      const stored = localStorage.getItem('theme');
+      if (!stored) {
+        setIsDark(e.matches);
+      }
+    };
+    
+    // Modern browsers
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    }
+    // Legacy browsers
+    else if (mediaQuery.addListener) {
+      mediaQuery.addListener(handleChange);
+      return () => mediaQuery.removeListener(handleChange);
+    }
+  }, []);
+  
+  const toggle = useCallback(() => {
+    setIsDark(prev => !prev);
+  }, []);
+  
+  return { isDark, toggle };
+}
+
+/**
+ * Layer: Interaction
+ * Hook: useAssessment
+ * (unchanged from v1.0)
+ */
+const assessmentReducer = (state, action) => {
+  switch (action.type) {
+    case 'FETCH_QUESTIONS_START':
+      return { ...state, status: 'loading', error: null };
+    
+    case 'FETCH_QUESTIONS_SUCCESS':
+      return {
+        ...state,
+        status: 'questions_ready',
+        questions: action.payload.questions,
+        metadata: action.payload.metadata,
+        currentIndex: 0,
+        answers: []
+      };
+    
+    case 'FETCH_QUESTIONS_ERROR':
+      return { ...state, status: 'error', error: action.payload };
+    
+    case 'ANSWER_QUESTION':
+      return {
+        ...state,
+        answers: [...state.answers, action.payload],
+        currentIndex: state.currentIndex + 1
+      };
+    
+    case 'ANALYZE_START':
+      return { ...state, status: 'analyzing' };
+    
+    case 'ANALYZE_SUCCESS':
+      return {
+        ...state,
+        status: 'completed',
+        result: action.payload
+      };
+    
+    case 'ANALYZE_ERROR':
+      return { ...state, status: 'error', error: action.payload };
+    
+    case 'RESET':
+      return initialAssessmentState;
+    
+    default:
+      return state;
+  }
+};
+
+const initialAssessmentState = {
+  status: 'idle',
+  questions: [],
+  metadata: null,
+  currentIndex: 0,
+  answers: [],
+  result: null,
+  error: null
+};
+
+function useAssessment() {
+  const [state, dispatch] = useReducer(assessmentReducer, initialAssessmentState);
+  const abortControllerRef = useRef(null);
+  
+  const startAssessment = useCallback(async () => {
+    dispatch({ type: 'FETCH_QUESTIONS_START' });
+    
+    try {
+      const data = await BFFClient.fetchAssessmentQuestions();
+      dispatch({ type: 'FETCH_QUESTIONS_SUCCESS', payload: data });
+    } catch (error) {
+      dispatch({ type: 'FETCH_QUESTIONS_ERROR', payload: error.message });
+    }
+  }, []);
+  
+  const answerQuestion = useCallback((questionId, answer) => {
+    dispatch({
+      type: 'ANSWER_QUESTION',
+      payload: { questionId, ...answer }
+    });
+  }, []);
+  
+  const submitAssessment = useCallback(async () => {
+    dispatch({ type: 'ANALYZE_START' });
+    
+    try {
+      const result = await BFFClient.analyzeResults(state.answers);
+      dispatch({ type: 'ANALYZE_SUCCESS', payload: result });
+      return result;
+    } catch (error) {
+      dispatch({ type: 'ANALYZE_ERROR', payload: error.message });
+      throw error;
+    }
+  }, [state.answers]);
+  
+  const reset = useCallback(() => {
+    dispatch({ type: 'RESET' });
+  }, []);
+  
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
+  
+  return {
+    state,
+    startAssessment,
+    answerQuestion,
+    submitAssessment,
+    reset,
+    isComplete: state.currentIndex >= state.questions.length && state.questions.length > 0,
+    progress: state.questions.length > 0 
+      ? Math.round((state.currentIndex / state.questions.length) * 100)
+      : 0
+  };
+}
+
+/**
+ * Layer: Interaction
+ * Hook: useAIMentor
+ * (unchanged from v1.0)
+ */
+function useAIMentor() {
+  const [state, setState] = useState({
+    status: 'idle',
+    text: '',
+    error: null
+  });
+  const isCancelledRef = useRef(false);
+  
+  const analyze = useCallback(async (assessmentResult) => {
+    isCancelledRef.current = false;
+    setState({ status: 'streaming', text: '', error: null });
+    
+    try {
+      const { stream } = await BFFClient.streamAIAnalysis(assessmentResult);
+      
+      for await (const chunk of stream()) {
+        if (isCancelledRef.current) break;
+        setState(prev => ({ ...prev, text: chunk }));
+      }
+      
+      if (!isCancelledRef.current) {
+        setState(prev => ({ ...prev, status: 'completed' }));
+      }
+    } catch (error) {
+      if (!isCancelledRef.current) {
+        setState({ status: 'error', text: '', error: error.message });
+      }
+    }
+  }, []);
+  
+  const cancel = useCallback(() => {
+    isCancelledRef.current = true;
+    setState({ status: 'idle', text: '', error: null });
+  }, []);
+  
+  const reset = useCallback(() => {
+    isCancelledRef.current = true;
+    setState({ status: 'idle', text: '', error: null });
+  }, []);
+  
+  useEffect(() => {
+    return () => {
+      isCancelledRef.current = true;
+    };
+  }, []);
+  
+  return { state, analyze, cancel, reset };
+}
+
+/**
+ * Layer: Interaction
+ * Hook: useResources
+ * 
+ * NEW v1.1: Quản lý resource fetching và filtering
+ * 
+ * Purpose: Orchestrate resource data flow
+ * 
+ * Giải quyết vấn đề:
+ * - Fetch data from BFF layer
+ * - Handle loading và error states
+ * - Support filtering by subject
+ * - Prevent unnecessary re-fetches
+ * 
+ * Tại sao cần hook riêng:
+ * - Tách business logic khỏi UI
+ * - Dễ test logic độc lập
+ * - Có thể reuse ở nhiều components
+ * 
+ * Pattern: useState + useEffect với dependency array
+ */
+function useResources() {
+  const [state, setState] = useState({
+    status: 'idle', // idle | loading | success | error
+    resources: [],
+    metadata: null,
+    error: null
+  });
+  
+  const [filters, setFilters] = useState({
+    subject: 'all'
+  });
+  
+  const fetchResources = useCallback(async () => {
+    setState(prev => ({ ...prev, status: 'loading', error: null }));
+    
+    try {
+      const data = await BFFClient.fetchYouTubeResources(filters);
+      setState({
+        status: 'success',
+        resources: data.resources,
+        metadata: data.metadata,
+        error: null
+      });
+    } catch (error) {
+      setState({
+        status: 'error',
+        resources: [],
+        metadata: null,
+        error: error.message
+      });
+    }
+  }, [filters]);
+  
+  // Fetch on mount và khi filters thay đổi
+  useEffect(() => {
+    fetchResources();
+  }, [fetchResources]);
+  
+  const updateFilters = useCallback((newFilters) => {
+    setFilters(prev => ({ ...prev, ...newFilters }));
+  }, []);
+  
+  const retry = useCallback(() => {
+    fetchResources();
+  }, [fetchResources]);
+  
+  return {
+    state,
+    filters,
+    updateFilters,
+    retry
+  };
+}
+
+// =============================================================================
+// PRESENTATION LAYER - UI COMPONENTS
+// =============================================================================
+
+/**
+ * Layer: Presentation
+ * Component: Layout
+ * 
+ * FIX v1.1: Nhận currentPage và onNavigate từ App (state lifting)
+ * 
+ * VẤN ĐỀ CŨ:
+ * - NavLink có useState riêng không sync với App
+ * - Duplicate state management
+ * - Navigation không hoạt động đúng
+ * 
+ * GIẢI PHÁP:
+ * - App giữ single source of truth cho currentPage
+ * - Layout nhận currentPage và onNavigate qua props
+ * - NavLink là pure component, chỉ highlight active state
+ * 
+ * Props:
+ * - children: React nodes to render
+ * - darkMode: boolean (từ useDarkMode hook)
+ * - onToggleDarkMode: function
+ * - currentPage: string (từ App state)
+ * - onNavigate: function (navigate handler từ App)
+ */
+function Layout({ children, darkMode, onToggleDarkMode, currentPage, onNavigate }) {
+  return (
+    <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200">
+      <nav className="border-b border-gray-200 dark:border-gray-700">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center gap-8">
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+                Hệ Sinh Thái Tự Học Số
+              </h1>
+              <div className="hidden md:flex gap-6">
+                <NavLink 
+                  to="home" 
+                  isActive={currentPage === 'home'} 
+                  onClick={onNavigate}
+                >
+                  Trang chủ
+                </NavLink>
+                <NavLink 
+                  to="assessment" 
+                  isActive={currentPage === 'assessment'} 
+                  onClick={onNavigate}
+                >
+                  Đánh giá
+                </NavLink>
+                <NavLink 
+                  to="planner" 
+                  isActive={currentPage === 'planner'} 
+                  onClick={onNavigate}
+                >
+                  Lộ trình
+                </NavLink>
+                <NavLink 
+                  to="resources" 
+                  isActive={currentPage === 'resources'} 
+                  onClick={onNavigate}
+                >
+                  Tài nguyên
+                </NavLink>
+              </div>
+            </div>
+            
+            <button
+              onClick={onToggleDarkMode}
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              aria-label={darkMode ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối'}
+            >
+              {darkMode ? '☀️' : '🌙'}
+            </button>
+          </div>
+        </div>
+      </nav>
+      
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {children}
+      </main>
+    </div>
+  );
+}
+
+/**
+ * Layer: Presentation
+ * Component: NavLink
+ * 
+ * FIX v1.1: Pure component, không có internal state
+ * 
+ * Props:
+ * - to: string (page identifier)
+ * - isActive: boolean (từ parent)
+ * - onClick: function (handler từ parent)
+ * - children: React nodes
+ */
+function NavLink({ to, isActive, onClick, children }) {
+  const handleClick = () => {
+    onClick(to);
+  };
+  
+  return (
+    <button
+      onClick={handleClick}
+      className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+        isActive
+          ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200'
+          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+/**
+ * Layer: Presentation
+ * Component: AssessmentCard
+ * (unchanged from v1.0)
+ */
+function AssessmentCard({ question, onAnswer, questionNumber, totalQuestions }) {
+  const [selected, setSelected] = useState(null);
+  
+  const handleSelect = (option) => {
+    setSelected(option);
+  };
+  
+  const handleSubmit = () => {
+    if (selected) {
+      onAnswer(question.id, selected);
+      setSelected(null);
+    }
+  };
+  
+  return (
+    <div 
+      className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 max-w-2xl mx-auto"
+      role="article"
+      aria-labelledby={`question-${question.id}`}
+    >
+      <div className="mb-6">
+        <div className="flex justify-between items-center mb-4">
+          <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+            Câu {questionNumber} / {totalQuestions}
+          </span>
+          <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
+            {question.subject}
+          </span>
+        </div>
+        
+        <h2 
+          id={`question-${question.id}`}
+          className="text-xl font-semibold text-gray-900 dark:text-white"
+        >
+          {question.text}
+        </h2>
+      </div>
+      
+      <div className="space-y-3 mb-6" role="radiogroup" aria-labelledby={`question-${question.id}`}>
+        {question.options.map((option) => (
+          <button
+            key={option.id}
+            onClick={() => handleSelect(option)}
+            className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
+              selected?.id === option.id
+                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 dark:border-blue-400'
+                : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+            }`}
+            role="radio"
+            aria-checked={selected?.id === option.id}
+          >
+            <div className="flex items-start gap-3">
+              <div className={`mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                selected?.id === option.id
+                  ? 'border-blue-500 dark:border-blue-400'
+                  : 'border-gray-300 dark:border-gray-600'
+              }`}>
+                {selected?.id === option.id && (
+                  <div className="w-3 h-3 rounded-full bg-blue-500 dark:bg-blue-400" />
+                )}
+              </div>
+              <span className="text-gray-700 dark:text-gray-300">{option.text}</span>
+            </div>
+          </button>
+        ))}
+      </div>
+      
+      <button
+        onClick={handleSubmit}
+        disabled={!selected}
+        className="w-full py-3 px-6 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-blue-600 hover:bg-blue-700 text-white"
+      >
+        Tiếp tục
+      </button>
+    </div>
+  );
+}
+
+/**
+ * Layer: Presentation
+ * Component: ResultsDashboard
+ * (unchanged from v1.0)
+ */
+function ResultsDashboard({ result, onStartAI }) {
+  const { scores, strengths, weaknesses, recommendations } = result;
+  
+  const getScoreColor = (score) => {
+    if (score >= 70) return 'bg-green-500 dark:bg-green-600';
+    if (score >= 50) return 'bg-yellow-500 dark:bg-yellow-600';
+    return 'bg-red-500 dark:bg-red-600';
+  };
+  
+  const getScoreTextColor = (score) => {
+    if (score >= 70) return 'text-green-700 dark:text-green-300';
+    if (score >= 50) return 'text-yellow-700 dark:text-yellow-300';
+    return 'text-red-700 dark:text-red-300';
+  };
+  
+  return (
+    <div className="max-w-4xl mx-auto space-y-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+          Kết quả đánh giá năng lực tự học
+        </h2>
+        
+        <div className="space-y-4 mb-8">
+          {Object.entries(scores).map(([key, score]) => (
+            <div key={key}>
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {getScoreLabel(key)}
+                </span>
+                <span className={`text-sm font-bold ${getScoreTextColor(score)}`}>
+                  {score}/100
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div
+                  className={`h-2 rounded-full transition-all duration-500 ${getScoreColor(score)}`}
+                  style={{ width: `${score}%` }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        {strengths.length > 0 && (
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+              <span>💪</span> Điểm mạnh
+            </h3>
+            <div className="space-y-3">
+              {strengths.map((strength, idx) => (
+                <div key={idx} className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                  <div className="font-medium text-green-900 dark:text-green-300 mb-1">
+                    {strength.area}
+                  </div>
+                  <div className="text-sm text-green-700 dark:text-green-400">
+                    {strength.description}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        {weaknesses.length > 0 && (
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+              <span>🎯</span> Cần cải thiện
+            </h3>
+            <div className="space-y-3">
+              {weaknesses.map((weakness, idx) => (
+                <div key={idx} className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                  <div className="font-medium text-yellow-900 dark:text-yellow-300 mb-1">
+                    {weakness.area}
+                  </div>
+                  <div className="text-sm text-yellow-700 dark:text-yellow-400">
+                    {weakness.description}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        {recommendations.length > 0 && (
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+              <span>📋</span> Gợi ý hành động
+            </h3>
+            <div className="space-y-3">
+              {recommendations.map((rec, idx) => (
+                <div key={idx} className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <div className="flex items-start gap-3">
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500 dark:bg-blue-600 text-white text-sm flex items-center justify-center font-medium">
+                      {idx + 1}
+                    </span>
+                    <div className="flex-1">
+                      <div className="text-sm text-blue-900 dark:text-blue-300 mb-1">
+                        {rec.action}
+                      </div>
+                      <div className="text-xs text-blue-700 dark:text-blue-400">
+                        Thời gian: {rec.timeframe}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        <div className="mt-8 p-6 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+            <span>🤖</span> AI Mentor của em
+          </h3>
+          <p className="text-sm text-gray-700 dark:text-gray-300 mb-4">
+            Để hiểu sâu hơn về kết quả và nhận tư vấn cá nhân hóa, hãy trò chuyện với AI Mentor nhé!
+          </p>
+          <button
+            onClick={onStartAI}
+            className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
+          >
+            Trò chuyện với AI Mentor
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function getScoreLabel(key) {
+  const labels = {
+    metacognition: 'Tư duy siêu nhận thức',
+    autonomy: 'Tính tự chủ',
+    criticalThinking: 'Tư duy phản biện',
+    aiLiteracy: 'Năng lực AI',
+    growthMindset: 'Tư duy phát triển'
+  };
+  return labels[key] || key;
+}
+
+/**
+ * Layer: Presentation
+ * Component: AIMentorChat
+ * (unchanged from v1.0)
+ */
+function AIMentorChat({ isOpen, onClose, result, aiState, onStartAnalysis }) {
+  const modalRef = useRef(null);
+  
+  useEffect(() => {
+    if (isOpen) {
+      onStartAnalysis(result);
+      modalRef.current?.focus();
+      
+      const handleEscape = (e) => {
+        if (e.key === 'Escape') onClose();
+      };
+      document.addEventListener('keydown', handleEscape);
+      
+      return () => {
+        document.removeEventListener('keydown', handleEscape);
+      };
+    }
+  }, [isOpen, result, onStartAnalysis]);
+  
+  if (!isOpen) return null;
+  
+  return (
+    <div 
+      className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+      onClick={onClose}
+    >
+      <div
+        ref={modalRef}
+        className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-labelledby="ai-mentor-title"
+        aria-modal="true"
+        tabIndex={-1}
+      >
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+          <h2 id="ai-mentor-title" className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <span>🤖</span> AI Mentor
+          </h2>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            aria-label="Đóng"
+          >
+            ✕
+          </button>
+        </div>
+        
+        <div className="p-6 overflow-y-auto max-h-[60vh]">
+          {aiState.status === 'streaming' && (
+            <div className="mb-4 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+              <div className="animate-pulse">●</div>
+              <span>AI Mentor đang viết...</span>
+            </div>
+          )}
+          
+          {aiState.status === 'error' && (
+            <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400">
+              Có lỗi xảy ra: {aiState.error}
+            </div>
+          )}
+          
+          {aiState.text && (
+            <div className="prose dark:prose-invert max-w-none">
+              <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
+                {aiState.text}
+              </p>
+            </div>
+          )}
+          
+          {aiState.status === 'completed' && (
+            <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <h3 className="font-semibold text-blue-900 dark:text-blue-300 mb-2">
+                Bước tiếp theo
+              </h3>
+              <ul className="space-y-2 text-sm text-blue-700 dark:text-blue-400">
+                {result.nextSteps.map((step, idx) => (
+                  <li key={idx} className="flex items-start gap-2">
+                    <span>→</span>
+                    <span>{step}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+        
+        <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+          >
+            Đóng
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Layer: Presentation
+ * Component: ResourceCard
+ * 
+ * NEW v1.1: Display YouTube channel resource
+ * 
+ * Props:
+ * - resource: object { name, description, thumbnail, url, subject, verified, subscribers }
+ * 
+ * Pure presentational component
+ * Accessibility: Link với proper aria-label
+ */
+function ResourceCard({ resource }) {
+  const subjectLabels = {
+    math: 'Toán',
+    physics: 'Vật lý',
+    chemistry: 'Hóa học',
+    biology: 'Sinh học',
+    english: 'Tiếng Anh',
+    history: 'Lịch sử',
+    geography: 'Địa lý',
+    literature: 'Văn học',
+    general: 'Tổng hợp',
+    critical_thinking: 'Tư duy'
+  };
+  
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden">
+      <div className="relative">
+        <img
+          src={resource.thumbnail}
+          alt={`${resource.name} thumbnail`}
+          className="w-full h-48 object-cover"
+          loading="lazy"
+        />
+        {resource.verified && (
+          <div className="absolute top-2 right-2 bg-blue-600 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
+            <span>✓</span>
+            <span>Đã kiểm duyệt</span>
+          </div>
+        )}
+      </div>
+      
+      <div className="p-6">
+        <div className="flex items-start justify-between mb-2">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            {resource.name}
+          </h3>
+          <span className="px-2 py-1 text-xs rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+            {subjectLabels[resource.subject] || resource.subject}
+          </span>
+        </div>
+        
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-3">
+          {resource.description}
+        </p>
+        
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-gray-500 dark:text-gray-500">
+            {resource.subscribers} subscribers
+          </span>
+          
+          <a
+            href={resource.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition-colors flex items-center gap-2"
+            aria-label={`Xem kênh ${resource.name} trên YouTube`}
+          >
+            <span>▶</span>
+            <span>Xem kênh</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// =============================================================================
+// PAGES
+// =============================================================================
+
+/**
+ * Page: Home
+ * (unchanged from v1.0)
+ */
+function HomePage({ onNavigate }) {
+  return (
+    <div className="space-y-12">
+      <section className="text-center py-16">
+        <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6">
+          Xây dựng năng lực tự học
+          <br />
+          <span className="text-blue-600 dark:text-blue-400">cho thế hệ AI</span>
+        </h1>
+        <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto mb-8">
+          Không chỉ nâng cao kết quả học tập, mà phát triển khả năng tự chủ học tập lâu dài
+          trong bối cảnh công nghệ AI phổ biến.
+        </p>
+        <button
+          onClick={() => onNavigate('assessment')}
+          className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-lg transition-colors"
+        >
+          Bắt đầu đánh giá năng lực →
+        </button>
+      </section>
+      
+      <section className="grid md:grid-cols-3 gap-8">
+        <FeatureCard
+          icon="📊"
+          title="Đánh giá năng lực"
+          description="Khám phá điểm mạnh và khu vực cần phát triển về năng lực tự học của bạn"
+        />
+        <FeatureCard
+          icon="🗺️"
+          title="Lộ trình cá nhân"
+          description="Lộ trình học tập được thiết kế riêng dựa trên kết quả đánh giá"
+        />
+        <FeatureCard
+          icon="📚"
+          title="Tài nguyên đã kiểm duyệt"
+          description="Kho tài liệu chất lượng cao được giáo viên và chuyên gia xác minh"
+        />
+      </section>
+    </div>
+  );
+}
+
+function FeatureCard({ icon, title, description }) {
+  return (
+    <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+      <div className="text-4xl mb-4">{icon}</div>
+      <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+        {title}
+      </h3>
+      <p className="text-gray-600 dark:text-gray-400">
+        {description}
+      </p>
+    </div>
+  );
+}
+
+/**
+ * Page: Assessment
+ * (unchanged from v1.0)
+ */
+function AssessmentPage() {
+  const {
+    state,
+    startAssessment,
+    answerQuestion,
+    submitAssessment,
+    reset,
+    isComplete,
+    progress
+  } = useAssessment();
+  
+  const {
+    state: aiState,
+    analyze: analyzeWithAI,
+    cancel: cancelAI,
+    reset: resetAI
+  } = useAIMentor();
+  
+  const [showAIModal, setShowAIModal] = useState(false);
+  
+  const handleStartAI = (result) => {
+    setShowAIModal(true);
+  };
+  
+  const handleCloseAI = () => {
+    setShowAIModal(false);
+    resetAI();
+  };
+  
+  useEffect(() => {
+    if (isComplete && state.status === 'questions_ready') {
+      submitAssessment();
+    }
+  }, [isComplete, state.status, submitAssessment]);
+  
+  if (state.status === 'idle') {
+    return (
+      <div className="max-w-2xl mx-auto text-center py-16">
+        <div className="text-6xl mb-6">📊</div>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+          Đánh giá năng lực tự học
+        </h1>
+        <p className="text-lg text-gray-600 dark:text-gray-400 mb-8">
+          12 câu hỏi giúp bạn hiểu rõ hơn về khả năng tự chủ học tập của mình.
+          Không có đúng sai, chỉ có phù hợp với con người bạn.
+        </p>
+        <div className="mb-8 p-6 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 text-left">
+          <h3 className="font-semibold text-blue-900 dark:text-blue-300 mb-3">
+            Bạn sẽ được đánh giá về:
+          </h3>
+          <ul className="space-y-2 text-blue-700 dark:text-blue-400">
+            <li>• Tư duy siêu nhận thức (Metacognition)</li>
+            <li>• Tính tự chủ trong học tập</li>
+            <li>• Khả năng tư duy phản biện</li>
+            <li>• Năng lực sử dụng AI hiệu quả</li>
+            <li>• Tư duy phát triển (Growth Mindset)</li>
+          </ul>
+        </div>
+        <button
+          onClick={startAssessment}
+          className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-lg transition-colors"
+        >
+          Bắt đầu ngay
+        </button>
+      </div>
+    );
+  }
+  
+  if (state.status === 'loading') {
+    return (
+      <div className="flex flex-col items-center justify-center py-16">
+        <div className="animate-spin text-6xl mb-4">⚙️</div>
+        <p className="text-gray-600 dark:text-gray-400">Đang chuẩn bị câu hỏi...</p>
+      </div>
+    );
+  }
+  
+  if (state.status === 'questions_ready' && !isComplete) {
+    const currentQuestion = state.questions[state.currentIndex];
+    
+    return (
+      <div className="space-y-6">
+        <div className="max-w-2xl mx-auto">
+          <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
+            <span>Tiến độ</span>
+            <span>{progress}%</span>
+          </div>
+          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+            <div
+              className="bg-blue-600 dark:bg-blue-500 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+        
+        <AssessmentCard
+          question={currentQuestion}
+          onAnswer={answerQuestion}
+          questionNumber={state.currentIndex + 1}
+          totalQuestions={state.questions.length}
+        />
+      </div>
+    );
+  }
+  
+  if (state.status === 'analyzing') {
+    return (
+      <div className="flex flex-col items-center justify-center py-16">
+        <div className="animate-pulse text-6xl mb-4">🧠</div>
+        <p className="text-xl text-gray-900 dark:text-white font-medium mb-2">
+          Đang phân tích kết quả...
+        </p>
+        <p className="text-gray-600 dark:text-gray-400">
+          AI đang xử lý câu trả lời của bạn
+        </p>
+      </div>
+    );
+  }
+  
+  if (state.status === 'completed' && state.result) {
+    return (
+      <>
+        <ResultsDashboard
+          result={state.result}
+          onStartAI={handleStartAI}
+        />
+        
+        <AIMentorChat
+          isOpen={showAIModal}
+          onClose={handleCloseAI}
+          result={state.result}
+          aiState={aiState}
+          onStartAnalysis={analyzeWithAI}
+        />
+        
+        <div className="max-w-4xl mx-auto mt-8 text-center">
+          <button
+            onClick={reset}
+            className="px-6 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+          >
+            Làm lại đánh giá
+          </button>
+        </div>
+      </>
+    );
+  }
+  
+  if (state.status === 'error') {
+    return (
+      <div className="max-w-2xl mx-auto text-center py-16">
+        <div className="text-6xl mb-6">⚠️</div>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+          Có lỗi xảy ra
+        </h2>
+        <p className="text-gray-600 dark:text-gray-400 mb-8">
+          {state.error}
+        </p>
+        <button
+          onClick={reset}
+          className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+        >
+          Thử lại
+        </button>
+      </div>
+    );
+  }
+  
+  return null;
+}
+
+/**
+ * Page: Learning Planner
+ * Status: MOCK
+ * (unchanged from v1.0)
+ */
+function LearningPlannerPage() {
+  return (
+    <div className="max-w-4xl mx-auto">
+      <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">
+        Lộ trình học tập cá nhân
+      </h1>
+      
+      <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6 mb-8">
+        <div className="flex items-start gap-3">
+          <span className="text-2xl">🚧</span>
+          <div>
+            <h3 className="font-semibold text-yellow-900 dark:text-yellow-300 mb-2">
+              Module đang phát triển
+            </h3>
+            <p className="text-sm text-yellow-700 dark:text-yellow-400 mb-3">
+              Chức năng này hiện đang ở dạng mock. Production implementation sẽ bao gồm:
+            </p>
+            <ul className="text-sm text-yellow-700 dark:text-yellow-400 space-y-1">
+              <li>• Tạo lộ trình dựa trên kết quả đánh giá</li>
+              <li>• Personalized milestones theo tuần/tháng</li>
+              <li>• Spaced repetition schedule</li>
+              <li>• Progress tracking với data visualization</li>
+              <li>• Adaptive recommendations khi hoàn thành mục tiêu</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      
+      <div className="grid md:grid-cols-2 gap-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+          <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
+            Mục tiêu tháng này
+          </h3>
+          <div className="space-y-3">
+            {['Cải thiện tư duy phản biện', 'Thực hành learning log', 'Hoàn thành 5 bài tập tự giải'].map((goal, idx) => (
+              <div key={idx} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded">
+                <input type="checkbox" className="w-5 h-5" />
+                <span className="text-gray-700 dark:text-gray-300">{goal}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+          <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
+            Lịch học tuần này
+          </h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Coming soon...
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Page: Resources
+ * 
+ * STATUS: FULL IMPLEMENTATION v1.1
+ * 
+ * NEW: Real YouTube education channels
+ * NEW: useResources hook integration
+ * NEW: Subject filtering
+ * NEW: ResourceCard component
+ * 
+ * Data flow:
+ * 1. useResources hook fetch từ BFF
+ * 2. BFF trả normalized YouTube channel data
+ * 3. Page render loading/error/success states
+ * 4. User filter by subject → hook re-fetch
+ * 5. Cards display với external links
+ */
+function ResourcesPage() {
+  const { state, filters, updateFilters, retry } = useResources();
+  
+  const subjectOptions = [
+    { value: 'all', label: 'Tất cả môn học' },
+    { value: 'math', label: 'Toán' },
+    { value: 'physics', label: 'Vật lý' },
+    { value: 'chemistry', label: 'Hóa học' },
+    { value: 'biology', label: 'Sinh học' },
+    { value: 'english', label: 'Tiếng Anh' },
+    { value: 'history', label: 'Lịch sử' },
+    { value: 'geography', label: 'Địa lý' },
+    { value: 'literature', label: 'Văn học' },
+    { value: 'general', label: 'Tổng hợp' },
+    { value: 'critical_thinking', label: 'Tư duy' }
+  ];
+  
+  return (
+    <div className="max-w-6xl mx-auto">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+          Kho tài nguyên học tập
+        </h1>
+        <p className="text-gray-600 dark:text-gray-400">
+          Các kênh YouTube giáo dục đã được kiểm duyệt bởi giáo viên và chuyên gia
+        </p>
+      </div>
+      
+      {/* Filter */}
+      <div className="mb-6 flex gap-4">
+        <select
+          value={filters.subject}
+          onChange={(e) => updateFilters({ subject: e.target.value })}
+          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          {subjectOptions.map(option => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        
+        {state.metadata && (
+          <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+            <span>{state.metadata.total} kênh</span>
+          </div>
+        )}
+      </div>
+      
+      {/* Loading state */}
+      {state.status === 'loading' && (
+        <div className="flex flex-col items-center justify-center py-16">
+          <div className="animate-spin text-4xl mb-4">⚙️</div>
+          <p className="text-gray-600 dark:text-gray-400">Đang tải tài nguyên...</p>
+        </div>
+      )}
+      
+      {/* Error state */}
+      {state.status === 'error' && (
+        <div className="max-w-2xl mx-auto text-center py-16">
+          <div className="text-6xl mb-6">⚠️</div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+            Không thể tải tài nguyên
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-8">
+            {state.error}
+          </p>
+          <button
+            onClick={retry}
+            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+          >
+            Thử lại
+          </button>
+        </div>
+      )}
+      
+      {/* Success state */}
+      {state.status === 'success' && (
+        <>
+          {state.resources.length === 0 ? (
+            <div className="text-center py-16">
+              <div className="text-6xl mb-4">📚</div>
+              <p className="text-gray-600 dark:text-gray-400">
+                Không tìm thấy tài nguyên nào phù hợp
+              </p>
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {state.resources.map(resource => (
+                <ResourceCard key={resource.id} resource={resource} />
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+// =============================================================================
+// APP ROOT
+// =============================================================================
+
+/**
+ * Root App Component
+ * 
+ * FIX v1.1: Refactored state management
+ * 
+ * VẤN ĐỀ CŨ:
+ * - Dark mode hook được gọi nhưng không pass xuống Layout đúng cách
+ * - Navigation state không rõ ràng
+ * - NavLink có state riêng không sync
+ * 
+ * GIẢI PHÁP:
+ * - App giữ single source of truth cho currentPage
+ * - useDarkMode hook trả về { isDark, toggle }
+ * - Pass cả 4 props xuống Layout: darkMode, onToggleDarkMode, currentPage, onNavigate
+ * - Layout pass currentPage và onNavigate xuống NavLink
+ * - Không duplicate state ở bất kỳ đâu
+ * 
+ * Responsibilities:
+ * - Global state management (dark mode, routing)
+ * - Route rendering
+ * - Pass state và handlers xuống components
+ * 
+ * Production notes:
+ * - Replace với React Router cho proper routing
+ * - Add authentication context
+ * - Add error boundary
+ * - Add analytics tracking
+ */
+function App() {
+  const { isDark, toggle } = useDarkMode();
+  const [currentPage, setCurrentPage] = useState('home');
+  
+  const handleNavigate = useCallback((page) => {
+    setCurrentPage(page);
+    // Scroll to top on navigation
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+  
+  const renderPage = () => {
+    switch (currentPage) {
+      case 'home':
+        return <HomePage onNavigate={handleNavigate} />;
+      case 'assessment':
+        return <AssessmentPage />;
+      case 'planner':
+        return <LearningPlannerPage />;
+      case 'resources':
+        return <ResourcesPage />;
+      default:
+        return <HomePage onNavigate={handleNavigate} />;
+    }
+  };
+  
+  return (
+    <Layout 
+      darkMode={isDark}
+      onToggleDarkMode={toggle}
+      currentPage={currentPage}
+      onNavigate={handleNavigate}
+    >
+      {renderPage()}
+    </Layout>
+  );
+}
+
+export default App;

@@ -1,0 +1,195 @@
+﻿<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Kho Tài Nguyên — AITECH</title>
+    <meta name="description"
+        content="Kho tài nguyên học tập được phân loại theo môn, cấp độ — dành cho học sinh THPT Việt Nam.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="aitech.css">
+    <script>
+        tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Quicksand', 'sans-serif'] }, colors: { 'ns-purple': '#7c5cfc', 'ns-purple-light': '#a78bfa', 'ns-purple-soft': '#ede9fe', 'dark-text': '#5A4A4A' } } } }
+    </script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="aitech.js"></script>
+</head>
+
+<body class="relative min-h-screen pb-20 font-sans text-dark-text dark:text-gray-100">
+
+    <div class="blob bg-blue-100 w-[500px] h-[500px] rounded-full top-[-100px] left-[-150px] animate-float"></div>
+    <div class="blob bg-purple-100 w-[400px] h-[400px] rounded-full bottom-20 right-[-100px]"></div>
+
+    <button onclick="toggleTheme()"
+        class="fixed bottom-8 right-8 z-[60] bg-white dark:bg-slate-800 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-yellow-500 border-4 border-white dark:border-slate-700 hover:scale-110 transition-all">
+        <i class="ph-fill ph-sun text-2xl dark:hidden"></i><i
+            class="ph-fill ph-moon text-2xl text-blue-300 hidden dark:block"></i>
+    </button>
+
+    <nav class="p-4 sm:p-6 sticky top-0 z-50" id="navbar">
+        <div class="max-w-6xl mx-auto flex justify-between items-center glass-card px-6 py-3 rounded-full">
+            <a href="index.html"
+                class="flex items-center gap-2 text-gray-500 hover:text-ns-purple transition-colors font-bold group"><i
+                    class="ph-bold ph-arrow-left group-hover:-translate-x-1 transition-transform"></i> Trang chủ</a>
+            <div class="font-bold text-lg text-ns-purple flex items-center gap-2"><i class="ph-fill ph-books"></i><span
+                    class="hidden sm:inline">Kho Tài Nguyên</span></div>
+            <a href="apps.html"
+                class="text-sm font-bold text-gray-500 hover:text-ns-purple transition-colors hidden md:block">Ứng dụng
+                <i class="ph-bold ph-arrow-right"></i></a>
+        </div>
+    </nav>
+
+    <header class="text-center px-4 mb-12 mt-8 reveal">
+        <span
+            class="inline-block bg-white dark:bg-slate-800 text-ns-purple text-[10px] font-black px-4 py-1.5 rounded-full shadow-sm mb-4 uppercase tracking-widest border border-ns-purple/10">Đã
+            kiểm duyệt</span>
+        <h1 class="text-3xl md:text-5xl font-extrabold dark:text-white mb-6 leading-tight">Kho <span
+                class="text-ns-purple italic">Tài Nguyên</span> Học Tập</h1>
+        <p class="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto text-lg">Tổng hợp kênh YouTube, website, ứng dụng
+            và tài liệu chất lượng — phân loại theo môn và cấp độ.</p>
+    </header>
+
+    <!-- Search & Filters -->
+    <section class="max-w-6xl mx-auto px-4 mb-10 reveal">
+        <div class="glass-card p-4 rounded-2xl flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+            <div class="relative flex-1">
+                <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input type="text" id="search-input" oninput="filterResources()" placeholder="Tìm kiếm tài nguyên..."
+                    class="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-ns-purple">
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <button onclick="setSubject('all')"
+                    class="subject-btn active bg-ns-purple text-white px-3 py-1.5 rounded-full text-xs font-bold transition-all">Tất
+                    cả</button>
+                <button onclick="setSubject('toan')"
+                    class="subject-btn bg-white dark:bg-slate-700 px-3 py-1.5 rounded-full text-xs font-bold hover:bg-ns-purple hover:text-white transition-all">Toán</button>
+                <button onclick="setSubject('ly')"
+                    class="subject-btn bg-white dark:bg-slate-700 px-3 py-1.5 rounded-full text-xs font-bold hover:bg-ns-purple hover:text-white transition-all">Lý</button>
+                <button onclick="setSubject('hoa')"
+                    class="subject-btn bg-white dark:bg-slate-700 px-3 py-1.5 rounded-full text-xs font-bold hover:bg-ns-purple hover:text-white transition-all">Hóa</button>
+                <button onclick="setSubject('sinh')"
+                    class="subject-btn bg-white dark:bg-slate-700 px-3 py-1.5 rounded-full text-xs font-bold hover:bg-ns-purple hover:text-white transition-all">Sinh</button>
+                <button onclick="setSubject('van')"
+                    class="subject-btn bg-white dark:bg-slate-700 px-3 py-1.5 rounded-full text-xs font-bold hover:bg-ns-purple hover:text-white transition-all">Văn</button>
+                <button onclick="setSubject('anh')"
+                    class="subject-btn bg-white dark:bg-slate-700 px-3 py-1.5 rounded-full text-xs font-bold hover:bg-ns-purple hover:text-white transition-all">Anh</button>
+                <button onclick="setSubject('tin')"
+                    class="subject-btn bg-white dark:bg-slate-700 px-3 py-1.5 rounded-full text-xs font-bold hover:bg-ns-purple hover:text-white transition-all">Tin</button>
+                <button onclick="setSubject('tonghop')"
+                    class="subject-btn bg-white dark:bg-slate-700 px-3 py-1.5 rounded-full text-xs font-bold hover:bg-ns-purple hover:text-white transition-all">Tổng
+                    hợp</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Resources Grid -->
+    <main class="max-w-6xl mx-auto px-4">
+        <div id="resources-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        </div>
+        <p id="no-results" class="hidden text-center text-gray-400 mt-10 text-lg">Không tìm thấy tài nguyên phù hợp.</p>
+    </main>
+
+    <footer class="text-center mt-24 text-gray-400 dark:text-gray-600 text-sm pb-10">
+        <div class="flex justify-center items-center gap-2 mb-4"><i
+                class="ph-fill ph-sparkle text-2xl text-ns-purple"></i><span
+                class="font-bold text-slate-800 dark:text-white uppercase tracking-wider">AITECH</span></div>
+        <p>Dành cho học sinh THPT Việt Nam — 2026</p>
+    </footer>
+
+    <script>
+        const resources = [
+            // TOÁN
+            { name: 'Thầy Nguyễn Quốc Chí', desc: 'Kênh dạy Toán THPT uy tín, giải đề chi tiết.', subject: 'toan', level: 'Nâng cao', type: 'YouTube', url: 'https://www.youtube.com/@ThayNguyenQuocChi', icon: 'ph-youtube-logo', color: 'red' },
+            { name: 'Mathcha Notebook', desc: 'Viết toán online, tạo flashcard công thức.', subject: 'toan', level: 'Cơ bản', type: 'Website', url: 'https://www.mathcha.io/', icon: 'ph-globe', color: 'blue' },
+            { name: 'Khan Academy (Toán)', desc: 'Bài giảng video + bài tập theo trình tự — miễn phí.', subject: 'toan', level: 'Cơ bản', type: 'Website', url: 'https://www.khanacademy.org/', icon: 'ph-globe', color: 'green' },
+            // LÝ
+            { name: 'Vật Lý Lý Thú', desc: 'Kênh giảng vật lý trực quan, dễ hiểu.', subject: 'ly', level: 'Cơ bản', type: 'YouTube', url: '(cần bổ sung link)', icon: 'ph-youtube-logo', color: 'red' },
+            { name: 'PhET Simulations', desc: 'Mô phỏng tương tác các thí nghiệm vật lý.', subject: 'ly', level: 'Cơ bản', type: 'Website', url: 'https://phet.colorado.edu/', icon: 'ph-globe', color: 'purple' },
+            // HÓA
+            { name: 'Hóa Học Thầy Dũng', desc: 'Ôn thi THPTQG Hóa bài bản, có đề minh họa.', subject: 'hoa', level: 'Nâng cao', type: 'YouTube', url: '(cần bổ sung link)', icon: 'ph-youtube-logo', color: 'red' },
+            { name: 'Periodic Table (IUPAC)', desc: 'Bảng tuần hoàn tương tác chính thức.', subject: 'hoa', level: 'Cơ bản', type: 'Website', url: 'https://iupac.org/what-we-do/periodic-table-of-elements/', icon: 'ph-globe', color: 'teal' },
+            // SINH
+            { name: 'Sinh Học Trực Quan', desc: 'Video animation về sinh học phân tử, di truyền.', subject: 'sinh', level: 'Cơ bản', type: 'YouTube', url: '(cần bổ sung link)', icon: 'ph-youtube-logo', color: 'red' },
+            { name: 'Biointeractive (HHMI)', desc: 'Video và tài liệu sinh học từ Howard Hughes Medical Institute.', subject: 'sinh', level: 'Nâng cao', type: 'Website', url: 'https://www.biointeractive.org/', icon: 'ph-globe', color: 'green' },
+            // VĂN
+            { name: 'Văn Học Trẻ', desc: 'Phân tích tác phẩm, nghị luận, ôn thi THPTQG Văn.', subject: 'van', level: 'Nâng cao', type: 'YouTube', url: '(cần bổ sung link)', icon: 'ph-youtube-logo', color: 'red' },
+            { name: 'LitCharts', desc: 'Tóm tắt & phân tích tác phẩm văn học (tiếng Anh).', subject: 'van', level: 'Nâng cao', type: 'Website', url: 'https://www.litcharts.com/', icon: 'ph-globe', color: 'amber' },
+            // ANH
+            { name: 'Bacademy', desc: 'Ôn thi IELTS, SAT chuyên sâu cho học sinh THPT.', subject: 'anh', level: 'Nâng cao', type: 'YouTube', url: 'https://www.youtube.com/@Bacademy-onthivao10ieltssat', icon: 'ph-youtube-logo', color: 'red' },
+            { name: 'BBC Learning English', desc: 'Bài học tiếng Anh miễn phí từ BBC.', subject: 'anh', level: 'Cơ bản', type: 'Website', url: 'https://www.bbc.co.uk/learningenglish/', icon: 'ph-globe', color: 'blue' },
+            { name: 'Quizlet', desc: 'Flashcard đa ngôn ngữ, ôn từ vựng hiệu quả.', subject: 'anh', level: 'Cơ bản', type: 'App', url: 'https://quizlet.com/', icon: 'ph-device-mobile', color: 'indigo' },
+            // TIN
+            { name: 'Scratch (MIT)', desc: 'Lập trình kéo thả cho người mới bắt đầu.', subject: 'tin', level: 'Cơ bản', type: 'Website', url: 'https://scratch.mit.edu/', icon: 'ph-globe', color: 'orange' },
+            { name: 'freeCodeCamp', desc: 'Học lập trình web, Python, JS miễn phí — tự học.', subject: 'tin', level: 'Nâng cao', type: 'Website', url: 'https://www.freecodecamp.org/', icon: 'ph-globe', color: 'green' },
+            // TỔNG HỢP
+            { name: 'Beyond Limits', desc: 'Phát triển tư duy, kỷ luật bản thân, study tips.', subject: 'tonghop', level: 'Cơ bản', type: 'YouTube', url: 'https://www.youtube.com/@BeyondLimitsSpi', icon: 'ph-youtube-logo', color: 'red' },
+            { name: 'Emilyne', desc: 'Study vlog, cảm hứng học tập, thói quen tốt.', subject: 'tonghop', level: 'Cơ bản', type: 'YouTube', url: 'https://www.youtube.com/@emilyne.', icon: 'ph-youtube-logo', color: 'red' },
+            { name: 'Jellyyyday', desc: 'Study With Me, aesthetic, chill & productive.', subject: 'tonghop', level: 'Cơ bản', type: 'YouTube', url: 'https://www.youtube.com/@jellyyyday', icon: 'ph-youtube-logo', color: 'red' },
+            { name: 'Notion (Quản lý học)', desc: 'All-in-one workspace — ghi chú, lịch, to-do.', subject: 'tonghop', level: 'Cơ bản', type: 'App', url: 'https://www.notion.so/', icon: 'ph-device-mobile', color: 'slate' },
+            { name: 'Anki', desc: 'Flashcard SRS (Spaced Repetition System) mạnh nhất.', subject: 'tonghop', level: 'Cơ bản', type: 'App', url: 'https://apps.ankiweb.net/', icon: 'ph-device-mobile', color: 'blue' },
+            { name: 'Forest App', desc: 'Trồng cây khi tập trung — gamification cho học tập.', subject: 'tonghop', level: 'Cơ bản', type: 'App', url: 'https://www.forestapp.cc/', icon: 'ph-device-mobile', color: 'green' },
+        ];
+
+        let currentSubject = 'all';
+
+        function renderResources() {
+            const grid = document.getElementById('resources-grid');
+            const search = document.getElementById('search-input').value.toLowerCase();
+            let filtered = resources.filter(r => {
+                const matchSubject = currentSubject === 'all' || r.subject === currentSubject;
+                const matchSearch = !search || r.name.toLowerCase().includes(search) || r.desc.toLowerCase().includes(search);
+                return matchSubject && matchSearch;
+            });
+            if (filtered.length === 0) {
+                grid.innerHTML = '';
+                document.getElementById('no-results').classList.remove('hidden');
+                return;
+            }
+            document.getElementById('no-results').classList.add('hidden');
+            grid.innerHTML = filtered.map(r => `
+        <a href="${r.url}" target="_blank" rel="noopener noreferrer" class="resource-card glass-card rounded-[2rem] overflow-hidden group hover:border-ns-purple/30 border-2 border-transparent transition-all">
+          <div class="p-6 flex-1">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-11 h-11 rounded-xl bg-${r.color}-100 dark:bg-${r.color}-900/30 flex items-center justify-center text-${r.color}-500 shadow-inner">
+                <i class="ph-fill ${r.icon} text-xl"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <h3 class="font-bold text-base dark:text-white truncate group-hover:text-ns-purple transition-colors">${r.name}</h3>
+                <div class="flex gap-2 mt-0.5">
+                  <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-ns-purple/10 text-ns-purple">${r.type}</span>
+                  <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-gray-100 dark:bg-slate-700 text-gray-500">${r.level}</span>
+                </div>
+              </div>
+            </div>
+            <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">${r.desc}</p>
+          </div>
+          <div class="px-6 pb-4">
+            <span class="text-ns-purple text-xs font-bold group-hover:underline">${r.url.startsWith('http') ? 'Truy cập →' : '(cần bổ sung link)'}</span>
+          </div>
+        </a>
+      `).join('');
+        }
+
+        function setSubject(sub) {
+            currentSubject = sub;
+            document.querySelectorAll('.subject-btn').forEach(b => {
+                b.classList.remove('active', 'bg-ns-purple', 'text-white');
+                b.classList.add('bg-white', 'dark:bg-slate-700');
+            });
+            event.currentTarget.classList.add('active', 'bg-ns-purple', 'text-white');
+            event.currentTarget.classList.remove('bg-white', 'dark:bg-slate-700');
+            filterResources();
+        }
+        function filterResources() { renderResources() }
+        renderResources();
+    </script>
+</body>
+
+</html>

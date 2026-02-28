@@ -1,0 +1,199 @@
+﻿<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Ứng Dụng — AITECH</title>
+    <meta name="description"
+        content="Bộ công cụ số hỗ trợ học tập: chi tiêu, thời khóa biểu, xếp loại, Pomodoro, Study Planner.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="aitech.css">
+    <script>tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Quicksand', 'sans-serif'] }, colors: { 'ns-purple': '#7c5cfc', 'ns-purple-light': '#a78bfa', 'ns-purple-soft': '#ede9fe', 'dark-text': '#5A4A4A' } } } }</script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="aitech.js"></script>
+</head>
+
+<body class="relative min-h-screen pb-20 font-sans text-dark-text dark:text-gray-100">
+
+    <div class="blob bg-purple-100 w-[500px] h-[500px] rounded-full top-[-100px] left-[-150px] animate-float"></div>
+    <div class="blob bg-blue-100 w-[400px] h-[400px] rounded-full bottom-20 right-[-100px]"></div>
+
+    <button onclick="toggleTheme()"
+        class="fixed bottom-8 right-8 z-[60] bg-white dark:bg-slate-800 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-yellow-500 border-4 border-white dark:border-slate-700 hover:scale-110 transition-all">
+        <i class="ph-fill ph-sun text-2xl dark:hidden"></i><i
+            class="ph-fill ph-moon text-2xl text-blue-300 hidden dark:block"></i>
+    </button>
+
+    <nav class="p-4 sm:p-6 sticky top-0 z-50" id="navbar">
+        <div class="max-w-6xl mx-auto flex justify-between items-center glass-card px-6 py-3 rounded-full">
+            <a href="index.html"
+                class="flex items-center gap-2 text-gray-500 hover:text-ns-purple transition-colors font-bold group"><i
+                    class="ph-bold ph-arrow-left group-hover:-translate-x-1 transition-transform"></i> Trang chủ</a>
+            <div class="font-bold text-lg text-ns-purple flex items-center gap-2"><i
+                    class="ph-fill ph-squares-four"></i><span class="hidden sm:inline">Ứng Dụng</span></div>
+            <a href="assessment.html"
+                class="text-sm font-bold text-gray-500 hover:text-ns-purple transition-colors hidden md:block">Đánh giá
+                <i class="ph-bold ph-arrow-right"></i></a>
+        </div>
+    </nav>
+
+    <header class="text-center px-4 mb-16 mt-8 reveal">
+        <span
+            class="inline-block bg-white dark:bg-slate-800 text-ns-purple text-[10px] font-black px-4 py-1.5 rounded-full shadow-sm mb-4 uppercase tracking-widest border border-ns-purple/10">Miễn
+            phí — Offline</span>
+        <h1 class="text-3xl md:text-5xl font-extrabold dark:text-white mb-6 leading-tight">Bộ Công Cụ <span
+                class="text-ns-purple italic">AITECH</span></h1>
+        <p class="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto text-lg">Tất cả dữ liệu lưu trên thiết bị của bạn
+            (localStorage). Không cần đăng nhập, không thu thập dữ liệu.</p>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 stagger-in">
+
+        <!-- Expense Tracker -->
+        <a href="apps/chi-tieu.html"
+            class="glass-card p-8 rounded-[2.5rem] group hover:border-ns-purple/30 border-2 border-transparent transition-all hover:-translate-y-2">
+            <div
+                class="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-2xl flex items-center justify-center text-green-500 mb-6 shadow-inner group-hover:scale-110 transition-transform">
+                <i class="ph-fill ph-wallet text-4xl"></i>
+            </div>
+            <h2 class="text-xl font-bold dark:text-white mb-2 group-hover:text-ns-purple transition-colors">📊 Theo Dõi
+                Chi Tiêu</h2>
+            <p class="text-gray-500 text-sm mb-4">Ghi nhận khoản chi, phân loại, xem biểu đồ. Export/Import JSON.</p>
+            <span class="text-ns-purple text-xs font-bold group-hover:underline">Mở ứng dụng →</span>
+        </a>
+
+        <!-- Timetable -->
+        <a href="apps/thoi-khoa-bieu.html"
+            class="glass-card p-8 rounded-[2.5rem] group hover:border-ns-purple/30 border-2 border-transparent transition-all hover:-translate-y-2">
+            <div
+                class="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center text-blue-500 mb-6 shadow-inner group-hover:scale-110 transition-transform">
+                <i class="ph-fill ph-calendar-blank text-4xl"></i>
+            </div>
+            <h2 class="text-xl font-bold dark:text-white mb-2 group-hover:text-ns-purple transition-colors">📅 Thời Khóa
+                Biểu</h2>
+            <p class="text-gray-500 text-sm mb-4">Tạo lịch học T2–T7, thêm/sửa/xóa môn, in hoặc xuất.</p>
+            <span class="text-ns-purple text-xs font-bold group-hover:underline">Mở ứng dụng →</span>
+        </a>
+
+        <!-- Grade Calculator -->
+        <a href="apps/xep-loai.html"
+            class="glass-card p-8 rounded-[2.5rem] group hover:border-ns-purple/30 border-2 border-transparent transition-all hover:-translate-y-2">
+            <div
+                class="w-16 h-16 bg-orange-100 dark:bg-orange-900/30 rounded-2xl flex items-center justify-center text-orange-500 mb-6 shadow-inner group-hover:scale-110 transition-transform">
+                <i class="ph-fill ph-graduation-cap text-4xl"></i>
+            </div>
+            <h2 class="text-xl font-bold dark:text-white mb-2 group-hover:text-ns-purple transition-colors">🎓 Xếp Loại
+                Học Lực</h2>
+            <p class="text-gray-500 text-sm mb-4">Nhập điểm, tính TB tự động, xếp loại Giỏi/Khá/TB/Yếu.</p>
+            <span class="text-ns-purple text-xs font-bold group-hover:underline">Mở ứng dụng →</span>
+        </a>
+
+        <!-- Pomodoro -->
+        <a href="apps/pomodoro.html"
+            class="glass-card p-8 rounded-[2.5rem] group hover:border-ns-purple/30 border-2 border-transparent transition-all hover:-translate-y-2 border-ns-purple/10">
+            <div
+                class="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-2xl flex items-center justify-center text-red-500 mb-6 shadow-inner group-hover:scale-110 transition-transform">
+                <i class="ph-fill ph-timer text-4xl"></i>
+            </div>
+            <h2 class="text-xl font-bold dark:text-white mb-2 group-hover:text-ns-purple transition-colors">🍅 Pomodoro
+                Timer</h2>
+            <p class="text-gray-500 text-sm mb-4">25 phút tập trung + 5 phút nghỉ. Thống kê phiên học.</p>
+            <span class="text-ns-purple text-xs font-bold group-hover:underline">Mở ứng dụng →</span>
+        </a>
+
+        <!-- Study Planner -->
+        <a href="apps/study-planner.html"
+            class="glass-card p-8 rounded-[2.5rem] group hover:border-ns-purple/30 border-2 border-transparent transition-all hover:-translate-y-2">
+            <div
+                class="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-2xl flex items-center justify-center text-ns-purple mb-6 shadow-inner group-hover:scale-110 transition-transform">
+                <i class="ph-fill ph-note-pencil text-4xl"></i>
+            </div>
+            <h2 class="text-xl font-bold dark:text-white mb-2 group-hover:text-ns-purple transition-colors">📝 Study
+                Planner</h2>
+            <p class="text-gray-500 text-sm mb-4">To-do SMART, deadline, tuần review. Xây dựng thói quen.</p>
+            <span class="text-ns-purple text-xs font-bold group-hover:underline">Mở ứng dụng →</span>
+        </a>
+
+        <!-- AI Career Counseling -->
+        <a href="apps/tu-van-nghe-nghiep.html"
+            class="glass-card p-8 rounded-[2.5rem] group hover:border-ns-purple/30 border-2 border-transparent transition-all hover:-translate-y-2">
+            <div
+                class="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center text-indigo-500 mb-6 shadow-inner group-hover:scale-110 transition-transform">
+                <i class="ph-fill ph-briefcase text-4xl"></i>
+            </div>
+            <h2 class="text-xl font-bold dark:text-white mb-2 group-hover:text-ns-purple transition-colors">🎯 Tư Vấn
+                Nghề Nghiệp</h2>
+            <p class="text-gray-500 text-sm mb-4">Trắc nghiệm Holland RIASEC + AI tư vấn ngành học, trường ĐH.</p>
+            <span class="text-ns-purple text-xs font-bold group-hover:underline">Mở ứng dụng →</span>
+        </a>
+
+        <!-- Fraud Prevention -->
+        <a href="apps/phong-chong-lua-dao.html"
+            class="glass-card p-8 rounded-[2.5rem] group hover:border-red-400/30 border-2 border-transparent transition-all hover:-translate-y-2">
+            <div
+                class="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-2xl flex items-center justify-center text-red-500 mb-6 shadow-inner group-hover:scale-110 transition-transform">
+                <i class="ph-fill ph-shield-warning text-4xl"></i>
+            </div>
+            <h2 class="text-xl font-bold dark:text-white mb-2 group-hover:text-red-500 transition-colors">🛡️ Phòng
+                Chống Lừa Đảo</h2>
+            <p class="text-gray-500 text-sm mb-4">Quiz tình huống, mô phỏng lừa đảo, AI phân tích tin nhắn nghi ngờ.</p>
+            <span class="text-red-500 text-xs font-bold group-hover:underline">Mở ứng dụng →</span>
+        </a>
+
+        <!-- Web Blocker -->
+        <a href="apps/chan-web.html"
+            class="glass-card p-8 rounded-[2.5rem] group hover:border-ns-purple/30 border-2 border-transparent transition-all hover:-translate-y-2">
+            <div
+                class="w-16 h-16 bg-teal-100 dark:bg-teal-900/30 rounded-2xl flex items-center justify-center text-teal-500 mb-6 shadow-inner group-hover:scale-110 transition-transform">
+                <i class="ph-fill ph-shield-check text-4xl"></i>
+            </div>
+            <h2 class="text-xl font-bold dark:text-white mb-2 group-hover:text-ns-purple transition-colors">🚫 Chặn
+                Game & Web Xấu</h2>
+            <p class="text-gray-500 text-sm mb-4">Phần mềm Windows chặn game, web cờ bạc, web 18+. Bật/tắt 1 click.</p>
+            <span class="text-ns-purple text-xs font-bold group-hover:underline">Mở ứng dụng →</span>
+        </a>
+
+        <!-- Cybersecurity Check -->
+        <a href="apps/kiem-tra-an-toan.html"
+            class="glass-card p-8 rounded-[2.5rem] group hover:border-cyan-400/30 border-2 border-transparent transition-all hover:-translate-y-2">
+            <div
+                class="w-16 h-16 bg-cyan-100 dark:bg-cyan-900/30 rounded-2xl flex items-center justify-center text-cyan-500 mb-6 shadow-inner group-hover:scale-110 transition-transform">
+                <i class="ph-fill ph-shield-checkered text-4xl"></i>
+            </div>
+            <h2 class="text-xl font-bold dark:text-white mb-2 group-hover:text-cyan-500 transition-colors">🔒 Kiểm Tra
+                An Toàn Mạng</h2>
+            <p class="text-gray-500 text-sm mb-4">Kiểm tra URL đáng ngờ, quét file mã độc bằng VirusTotal, mẹo an toàn.
+            </p>
+            <span class="text-cyan-500 text-xs font-bold group-hover:underline">Mở ứng dụng →</span>
+        </a>
+
+        <!-- Assessment Link -->
+        <a href="assessment.html"
+            class="glass-card p-8 rounded-[2.5rem] group hover:border-ns-purple/30 border-2 border-transparent transition-all hover:-translate-y-2 bg-gradient-to-br from-purple-50/50 to-white dark:from-purple-900/10 dark:to-slate-900/50">
+            <div
+                class="w-16 h-16 bg-ns-purple/10 rounded-2xl flex items-center justify-center text-ns-purple mb-6 shadow-inner group-hover:scale-110 transition-transform">
+                <i class="ph-fill ph-exam text-4xl"></i>
+            </div>
+            <h2 class="text-xl font-bold dark:text-white mb-2 group-hover:text-ns-purple transition-colors">📊 Đánh Giá
+                Năng Lực</h2>
+            <p class="text-gray-500 text-sm mb-4">Trả lời câu hỏi → nhận phân tích + gợi ý phương pháp.</p>
+            <span class="text-ns-purple text-xs font-bold group-hover:underline">Bắt đầu đánh giá →</span>
+        </a>
+    </main>
+
+    <footer class="text-center mt-24 text-gray-400 dark:text-gray-600 text-sm pb-10">
+        <div class="flex justify-center items-center gap-2 mb-4"><i
+                class="ph-fill ph-sparkle text-2xl text-ns-purple"></i><span
+                class="font-bold text-slate-800 dark:text-white uppercase tracking-wider">AITECH</span></div>
+        <p>Dành cho học sinh THPT Việt Nam — 2026</p>
+    </footer>
+</body>
+
+</html>

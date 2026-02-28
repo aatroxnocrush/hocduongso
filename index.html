@@ -1,0 +1,603 @@
+﻿<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=5">
+    <title>AITECH — Học đường số dành cho học sinh THPT</title>
+    <meta name="description"
+        content="AITECH — Hệ sinh thái hỗ trợ tự học dành cho học sinh THPT Việt Nam. Kho tài nguyên, công cụ học tập, trợ lý AI.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="aitech.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Quicksand', 'sans-serif'] },
+                    colors: {
+                        'ns-purple': '#7c5cfc', 'ns-purple-light': '#a78bfa', 'ns-purple-soft': '#ede9fe',
+                        'ns-pink': '#f472b6', 'ns-blue': '#38bdf8', 'ns-green': '#34d399',
+                        'ns-orange': '#fb923c', 'ns-dark': '#0f172a', 'dark-text': '#5A4A4A',
+                    },
+                    animation: {
+                        'float': 'ns-float 6s ease-in-out infinite',
+                        'bounce-slow': 'bounce 3s infinite',
+                    },
+                    keyframes: {
+                        'ns-float': { '0%,100%': { transform: 'translateY(0) rotate(0)' }, '50%': { transform: 'translateY(-18px) rotate(1.5deg)' } },
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .hero-title {
+            word-break: keep-all;
+            overflow-wrap: break-word
+        }
+
+        @media(max-height:700px) {
+            #ai-hub-modal .glass-card {
+                max-height: 95vh
+            }
+
+            #ai-input {
+                height: 60px
+            }
+        }
+    </style>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="aitech.js"></script>
+</head>
+
+<body class="relative min-h-screen text-dark-text dark:text-gray-100 font-sans">
+
+    <!-- Ambient blobs -->
+    <div class="blob bg-ns-purple-soft w-64 h-64 sm:w-96 sm:h-96 rounded-full top-0 left-0 animate-float"></div>
+    <div class="blob bg-blue-100 w-64 h-64 sm:w-80 sm:h-80 rounded-full bottom-0 right-0 animate-float"
+        style="animation-delay:2s"></div>
+    <div
+        class="blob bg-purple-100 w-48 h-48 sm:w-64 sm:h-64 rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-30">
+    </div>
+
+    <!-- ========== NAVIGATION ========== -->
+    <nav class="fixed w-full z-50 top-0 p-2 sm:p-4 transition-all duration-500" id="navbar">
+        <div
+            class="max-w-7xl mx-auto glass-card rounded-2xl sm:rounded-full px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center">
+            <a href="index.html" class="text-lg sm:text-2xl font-bold text-ns-purple flex items-center gap-2">
+                <i class="ph-fill ph-sparkle text-2xl sm:text-3xl"></i>
+                <span class="hidden xs:inline">AITECH</span>
+            </a>
+            <div class="hidden lg:flex space-x-5 font-bold dark:text-gray-200 text-sm">
+                <a href="index.html" class="text-ns-purple">Trang chủ</a>
+                <a href="thuctrang.html" class="hover:text-ns-purple transition-colors">Thực trạng</a>
+                <a href="giaiphap.html" class="hover:text-ns-purple transition-colors">Giải pháp</a>
+                <a href="portal_tai_nguyen.html" class="hover:text-ns-purple transition-colors">Tài nguyên</a>
+                <a href="apps.html" class="hover:text-ns-purple transition-colors">Ứng dụng</a>
+                <a href="assessment.html" class="hover:text-ns-purple transition-colors">Đánh giá</a>
+                <a href="about.html" class="hover:text-ns-purple transition-colors">Về AITECH</a>
+            </div>
+            <div class="flex items-center gap-3">
+                <!-- Login Button -->
+                <button onclick="signInWithGoogle()"
+                    class="aitech-login-btn bg-white dark:bg-slate-800 text-ns-purple px-3 sm:px-4 py-2 rounded-full font-bold hover:bg-ns-purple hover:text-white transition-all text-xs flex items-center gap-2 border border-ns-purple/20 shadow-sm">
+                    <i class="ph-bold ph-google-logo"></i>
+                    <span class="hidden sm:inline">Đăng nhập</span>
+                </button>
+                <!-- User Info (hidden by default) -->
+                <div class="aitech-user-info items-center gap-2 hidden">
+                    <img class="aitech-user-avatar w-8 h-8 rounded-full border-2 border-ns-purple/30 hidden"
+                        alt="Avatar" referrerpolicy="no-referrer">
+                    <span
+                        class="aitech-user-name text-xs font-bold text-ns-purple dark:text-purple-300 hidden sm:inline max-w-[100px] truncate"></span>
+                    <button onclick="signOutUser()" class="text-gray-400 hover:text-red-500 transition-colors p-1"
+                        title="Đăng xuất">
+                        <i class="ph-bold ph-sign-out text-lg"></i>
+                    </button>
+                </div>
+                <a href="apps.html"
+                    class="bg-ns-purple text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-black hover:bg-ns-purple-light transition-all uppercase text-xs tracking-wider shrink-0">Ứng
+                    dụng</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu Button (hamburger on small screens, in nav) -->
+
+    <!-- Theme Toggle -->
+    <button onclick="toggleTheme()"
+        class="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 z-50 bg-white dark:bg-slate-800 w-12 h-12 sm:w-14 sm:h-14 rounded-full shadow-2xl border-4 border-white dark:border-slate-700 flex items-center justify-center text-yellow-500 hover:scale-110 transition-all">
+        <i class="ph-fill ph-sun text-xl dark:hidden"></i>
+        <i class="ph-fill ph-moon text-xl text-blue-300 hidden dark:block"></i>
+    </button>
+
+    <!-- Chatbot FAB -->
+    <div class="fixed bottom-20 right-6 sm:bottom-24 sm:right-8 z-50">
+        <button onclick="toggleAIHub()"
+            class="bg-ns-purple text-white w-12 h-12 sm:w-14 sm:h-14 rounded-full shadow-2xl border-4 border-white dark:border-slate-700 flex items-center justify-center hover:scale-110 transition-all relative group">
+            <i class="ph-fill ph-sparkle text-xl sm:text-2xl"></i>
+            <span
+                class="absolute right-16 bg-white dark:bg-slate-800 text-ns-purple dark:text-white px-4 py-2 rounded-xl text-xs font-bold shadow-xl opacity-0 lg:group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none border border-ns-purple/20">✨
+                AITECH Study Assistant</span>
+        </button>
+    </div>
+
+    <!-- ========== AI CHATBOT MODAL ========== -->
+    <div id="ai-hub-modal"
+        class="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4 bg-black/40 backdrop-blur-sm hidden">
+        <div
+            class="glass-card w-full max-w-2xl rounded-[1.5rem] sm:rounded-[2.5rem] overflow-hidden flex flex-col max-h-[95vh] sm:max-h-[90vh]">
+            <div class="p-4 sm:p-6 hero-gradient text-white flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <i class="ph-fill ph-sparkle text-xl"></i>
+                    <h3 class="font-black uppercase tracking-widest text-xs">AITECH Study Assistant ✨</h3>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="nsToggleApiSettings()" class="hover:rotate-90 transition-transform p-1"
+                        title="Cài đặt API key">
+                        <i class="ph-bold ph-gear text-xl"></i>
+                    </button>
+                    <button onclick="toggleAIHub()" class="hover:rotate-90 transition-transform p-1">
+                        <i class="ph-bold ph-x text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="p-4 sm:p-8 flex flex-col gap-4 sm:gap-6 overflow-hidden">
+                <p class="text-sm sm:text-base text-gray-700 dark:text-gray-300 font-bold">Chào bạn! Mình là <span
+                        class="text-ns-purple">AITECH Assistant</span>, mình ở đây để giúp bạn học tập tốt hơn. 💜
+                </p>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="askAI('Lập lộ trình tự học môn Toán bứt phá trong 1 tháng')"
+                        class="bg-ns-purple-soft dark:bg-purple-900/20 text-ns-purple dark:text-purple-300 px-3 py-1.5 rounded-full text-xs font-bold hover:bg-ns-purple hover:text-white transition-all">📐
+                        Toán THPT</button>
+                    <button
+                        onclick="askAI('Mình cảm thấy stress quá vì áp lực thi cử sắp tới, hãy cho mình lời khuyên')"
+                        class="bg-pink-100 dark:bg-pink-900/20 text-pink-500 dark:text-pink-300 px-3 py-1.5 rounded-full text-xs font-bold hover:bg-pink-500 hover:text-white transition-all">🌈
+                        Giảm stress</button>
+                    <button onclick="askAI('Hướng dẫn phương pháp Active Recall và Spaced Repetition')"
+                        class="bg-blue-100 dark:bg-blue-900/20 text-blue-500 dark:text-blue-300 px-3 py-1.5 rounded-full text-xs font-bold hover:bg-blue-500 hover:text-white transition-all">🧠
+                        Kỹ thuật học</button>
+                </div>
+                <!-- API Key Settings Panel -->
+                <div id="ns-api-settings"
+                    class="hidden bg-gray-50 dark:bg-slate-800/50 rounded-2xl p-4 border border-ns-purple/10">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="font-black text-xs uppercase tracking-wider text-gray-600 dark:text-gray-300">⚙️
+                            Cài đặt API Key</span>
+                        <span id="ns-api-status" class="text-xs font-bold"></span>
+                    </div>
+                    <div class="flex gap-2 mb-3">
+                        <input id="ns-api-key-input" type="password" placeholder="Dán API key Gemini tại đây (AIza...)"
+                            class="flex-1 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-xl px-3 py-2 text-xs font-mono focus:outline-none focus:border-ns-purple dark:text-white">
+                        <button onclick="nsHandleApiKeySave()"
+                            class="bg-ns-purple text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-ns-purple-light transition-all">Lưu</button>
+                        <button id="ns-api-clear-btn" onclick="nsClearUserApiKey()" style="display:none"
+                            class="bg-red-500/10 text-red-500 px-3 py-2 rounded-xl text-xs font-bold hover:bg-red-500 hover:text-white transition-all">Xóa</button>
+                    </div>
+                    <p class="text-xs text-gray-400">
+                        💡 Lấy key miễn phí tại
+                        <a href="https://aistudio.google.com/apikey" target="_blank"
+                            class="text-ns-purple underline font-bold">aistudio.google.com</a>
+                        — 15 req/phút, không tốn phí.
+                    </p>
+                </div>
+                <div class="relative">
+                    <textarea id="ai-input" placeholder="Bạn muốn lập lộ trình hay cần hỗ trợ? Nhập tại đây nhé..."
+                        class="w-full bg-white dark:bg-slate-800 border-2 border-ns-purple/20 rounded-2xl p-4 pr-24 text-sm focus:outline-none focus:border-ns-purple transition-all h-20 sm:h-24 dark:text-white font-semibold resize-none"></textarea>
+                    <div class="absolute bottom-3 right-3 flex items-center gap-2">
+                        <label class="chatbot-upload-btn" title="Đính kèm ảnh hoặc file">
+                            <i class="ph-bold ph-paperclip"></i>
+                            <input type="file" accept="image/*,.pdf,.doc,.docx,.txt,.xlsx,.pptx" multiple
+                                onchange="nsChatbotAttachFile(this)" style="display:none">
+                        </label>
+                        <button id="send-btn" onclick="askAI()"
+                            class="bg-ns-purple text-white p-2 rounded-xl hover:scale-110 shadow-lg"><i
+                                class="ph-bold ph-paper-plane-right text-lg"></i></button>
+                    </div>
+                </div>
+                <div id="chatbot-attachments" class="flex flex-wrap gap-2"></div>
+                <div id="ai-response-container" class="hidden flex-1 overflow-hidden flex flex-col min-h-0">
+                    <div id="ai-response"
+                        class="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-6 overflow-y-auto text-sm leading-relaxed text-slate-800 dark:text-gray-100 border border-ns-purple/10 font-bold max-h-64">
+                        Đang suy nghĩ...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== HERO SECTION ========== -->
+    <header id="intro" class="min-h-screen flex items-center justify-center pt-24 px-4 relative overflow-hidden">
+        <div class="max-w-7xl mx-auto grid lg:grid-cols-2 gap-8 items-center">
+            <div class="space-y-6 sm:space-y-8 text-center lg:text-left order-2 lg:order-1">
+                <div
+                    class="inline-block bg-white dark:bg-slate-800 text-ns-purple px-4 py-1.5 rounded-full font-black shadow-sm border border-ns-purple/10 uppercase text-xs tracking-[0.2em]">
+                    ✨ Dự án AITECH 2026
+                </div>
+                <h1
+                    class="hero-title text-3xl sm:text-5xl lg:text-6xl font-extrabold leading-tight text-slate-800 dark:text-white">
+                    Nâng Cao Năng Lực
+                    <span class="block text-center gradient-text italic">Tự Học</span>
+                    Trong Kỷ Nguyên Số
+                </h1>
+                <p class="text-sm sm:text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto lg:mx-0">
+                    Hệ sinh thái hỗ trợ tự học toàn diện dành cho <strong class="text-slate-700 dark:text-gray-300">học
+                        sinh THPT Việt Nam</strong> — công cụ, tài nguyên, và phương pháp học tập hiện đại.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                    <a href="assessment.html"
+                        class="hero-gradient text-white px-8 py-3 rounded-xl font-bold hover:scale-105 transition-all shadow-xl text-center ripple hover-bounce">Đánh
+                        giá năng lực tự học</a>
+                    <a href="giaiphap.html"
+                        class="bg-white dark:bg-transparent dark:text-white text-ns-purple border-2 border-ns-purple px-8 py-3 rounded-xl font-bold hover:bg-purple-50 dark:hover:bg-slate-800 transition-all text-center">Giải
+                        pháp & Phương pháp</a>
+                </div>
+            </div>
+            <div class="relative group w-full max-w-lg mx-auto order-1 lg:order-2 tilt-hover">
+                <div
+                    class="absolute inset-0 bg-ns-purple-soft rounded-[2rem] transform rotate-6 lg:group-hover:rotate-3 transition-transform shadow-xl">
+                </div>
+                <div class="relative bg-white dark:bg-slate-800 p-2 rounded-[2rem] shadow-2xl border-2 border-white/50 overflow-hidden aspect-square flex items-center justify-center bg-cover bg-center"
+                    style="background-image:url('1.png')">
+                    <div
+                        class="absolute bottom-4 left-4 bg-white/90 dark:bg-slate-900/90 px-3 py-2 rounded-xl text-xs font-bold shadow-lg">
+                        ✨ AITECH
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ========== THỰC TRẠNG SUMMARY ========== -->
+    <section id="status" class="py-16 sm:py-24 px-4 bg-white/30 dark:bg-slate-900/30">
+        <div class="max-w-4xl mx-auto text-center mb-12">
+            <h2 class="text-2xl sm:text-4xl font-extrabold mb-4 dark:text-white leading-tight">Thực Trạng <span
+                    class="text-ns-purple italic">Thách Thức</span> Tự Học</h2>
+            <p class="text-gray-500 dark:text-gray-400 text-sm sm:text-base">Những rào cản học sinh THPT Việt Nam đang
+                đối mặt theo GDPT 2018</p>
+        </div>
+        <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="glass-card p-8 rounded-[2rem] text-center hover:-translate-y-2 transition-all">
+                <div
+                    class="w-16 h-16 mx-auto bg-orange-100 dark:bg-orange-900/40 rounded-2xl flex items-center justify-center mb-6">
+                    <i class="ph-fill ph-compass text-3xl text-orange-500"></i>
+                </div>
+                <h3 class="text-lg font-bold mb-3 dark:text-white">Mất Định Hướng</h3>
+                <p class="text-gray-500 text-xs sm:text-sm">Chưa xác định được mục đích rõ ràng, học tập mang tính đối
+                    phó.</p>
+            </div>
+            <div
+                class="glass-card p-8 rounded-[2rem] text-center hover:-translate-y-2 transition-all border-ns-purple/30 border-2">
+                <div
+                    class="w-16 h-16 mx-auto bg-purple-100 dark:bg-purple-900/40 rounded-2xl flex items-center justify-center mb-6">
+                    <i class="ph-fill ph-warning-circle text-3xl text-ns-purple"></i>
+                </div>
+                <h3 class="text-lg font-bold mb-3 dark:text-white">Áp Lực GDPT 2018</h3>
+                <p class="text-gray-500 text-xs sm:text-sm">Phương pháp dạy mới, đánh giá năng lực, môn tích hợp gây bỡ
+                    ngỡ.</p>
+            </div>
+            <div class="glass-card p-8 rounded-[2rem] text-center hover:-translate-y-2 transition-all">
+                <div
+                    class="w-16 h-16 mx-auto bg-blue-100 dark:bg-blue-900/40 rounded-2xl flex items-center justify-center mb-6">
+                    <i class="ph-fill ph-monitor text-3xl text-blue-500"></i>
+                </div>
+                <h3 class="text-lg font-bold mb-3 dark:text-white">Kỹ Năng Số</h3>
+                <p class="text-gray-500 text-xs sm:text-sm">Có thiết bị nhưng chưa biết cách tìm kiếm tài liệu chuẩn và
+                    đáng tin.</p>
+            </div>
+        </div>
+        <div class="mt-12 text-center">
+            <a href="thuctrang.html"
+                class="bg-white dark:bg-slate-800 text-ns-purple px-8 py-3 rounded-xl font-black shadow-xl uppercase text-xs">Xem
+                báo cáo chi tiết <i class="ph-bold ph-arrow-right"></i></a>
+        </div>
+    </section>
+
+    <!-- ========== GIẢI PHÁP SUMMARY ========== -->
+    <section id="solutions" class="py-16 sm:py-24 px-4 bg-white dark:bg-slate-900/50 sm:rounded-[4rem]">
+        <div class="max-w-6xl mx-auto">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-12 gap-4">
+                <div class="text-center md:text-left">
+                    <span class="text-ns-purple font-black uppercase text-xs tracking-widest mb-2 block">Phương pháp
+                        khoa học</span>
+                    <h2 class="text-2xl sm:text-4xl font-extrabold dark:text-white leading-tight">Cẩm Nang <span
+                            class="text-ns-purple">Tự Học</span> 🎒</h2>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
+                <div
+                    class="flex gap-4 p-6 rounded-[1.5rem] bg-purple-50/50 dark:bg-purple-900/20 border border-transparent hover:border-ns-purple/20 transition-all">
+                    <div
+                        class="shrink-0 bg-white dark:bg-gray-800 w-12 h-12 rounded-xl flex items-center justify-center shadow-md text-ns-purple">
+                        <i class="ph-bold ph-brain text-2xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold mb-2 dark:text-white">Active Recall</h3>
+                        <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Tự kiểm tra thay vì đọc lại —
+                            phương pháp giúp ghi nhớ sâu nhất (Karpicke & Roediger, 2008).</p>
+                    </div>
+                </div>
+                <div
+                    class="flex gap-4 p-6 rounded-[1.5rem] bg-blue-50/50 dark:bg-blue-900/20 border border-transparent hover:border-ns-purple/20 transition-all">
+                    <div
+                        class="shrink-0 bg-white dark:bg-slate-800 w-12 h-12 rounded-xl flex items-center justify-center shadow-md text-blue-500">
+                        <i class="ph-bold ph-timer text-2xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold mb-2 dark:text-white">Spaced Repetition</h3>
+                        <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Ôn theo khoảng cách tăng dần —
+                            chống đường cong quên lãng (Ebbinghaus, 1885).</p>
+                    </div>
+                </div>
+                <div
+                    class="flex gap-4 p-6 rounded-[1.5rem] bg-green-50/50 dark:bg-green-900/20 border border-transparent hover:border-ns-purple/20 transition-all">
+                    <div
+                        class="shrink-0 bg-white dark:bg-slate-800 w-12 h-12 rounded-xl flex items-center justify-center shadow-md text-green-500">
+                        <i class="ph-bold ph-target text-2xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold mb-2 dark:text-white">Mục Tiêu SMART</h3>
+                        <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Cụ thể, đo lường được, khả thi,
+                            thực tế, có thời hạn — khung hành động rõ ràng.</p>
+                    </div>
+                </div>
+                <div
+                    class="flex gap-4 p-6 rounded-[1.5rem] bg-orange-50/50 dark:bg-orange-900/20 border border-transparent hover:border-ns-purple/20 transition-all">
+                    <div
+                        class="shrink-0 bg-white dark:bg-slate-800 w-12 h-12 rounded-xl flex items-center justify-center shadow-md text-orange-500">
+                        <i class="ph-bold ph-users-three text-2xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold mb-2 dark:text-white">Học Cộng Tác</h3>
+                        <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Giảng lại cho bạn bè — theo Tháp
+                            Học Tập, hiệu quả ghi nhớ lên đến 90%.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-10 text-center">
+                <a href="giaiphap.html"
+                    class="hero-gradient text-white px-8 py-3 rounded-xl font-bold shadow-xl inline-block">Xem tất cả
+                    giải pháp & phương pháp <i class="ph-bold ph-arrow-right ml-1"></i></a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== APPS ECOSYSTEM ========== -->
+    <section id="apps-preview" class="py-16 sm:py-24 px-4">
+        <div class="max-w-6xl mx-auto">
+            <div
+                class="bg-gradient-to-br from-purple-50 via-white to-white dark:from-slate-800 dark:via-slate-900 rounded-[2rem] sm:rounded-[3.5rem] shadow-2xl p-6 sm:p-16 border-4 border-white dark:border-slate-700 relative overflow-hidden">
+                <div class="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                    <div class="text-center md:text-left">
+                        <span class="text-ns-purple font-black uppercase text-xs tracking-widest mb-4 block">Hệ sinh
+                            thái số</span>
+                        <h2 class="text-3xl sm:text-5xl font-extrabold mb-8 dark:text-white">Công Cụ<br><span
+                                class="text-ns-purple">AITECH</span></h2>
+                        <ul class="space-y-4 mb-10 text-left inline-block">
+                            <li class="flex items-center gap-3"><i
+                                    class="ph-fill ph-check-circle text-green-500"></i><span
+                                    class="font-bold text-xs sm:text-base">📊 Dashboard theo dõi chi tiêu học
+                                    sinh</span></li>
+                            <li class="flex items-center gap-3"><i
+                                    class="ph-fill ph-check-circle text-green-500"></i><span
+                                    class="font-bold text-xs sm:text-base">📅 Thời khóa biểu thông minh</span></li>
+                            <li class="flex items-center gap-3"><i
+                                    class="ph-fill ph-check-circle text-green-500"></i><span
+                                    class="font-bold text-xs sm:text-base">🎓 Xếp loại học lực tự động</span></li>
+                            <li class="flex items-center gap-3"><i
+                                    class="ph-fill ph-check-circle text-green-500"></i><span
+                                    class="font-bold text-xs sm:text-base text-ns-purple">🍅 Pomodoro + Study
+                                    Planner</span></li>
+                            <li class="flex items-center gap-3"><i
+                                    class="ph-fill ph-check-circle text-green-500"></i><span
+                                    class="font-bold text-xs sm:text-base">🎯 AI Tư vấn nghề nghiệp</span></li>
+                            <li class="flex items-center gap-3"><i
+                                    class="ph-fill ph-check-circle text-green-500"></i><span
+                                    class="font-bold text-xs sm:text-base">🛡️ Phòng chống lừa đảo</span></li>
+                            <li class="flex items-center gap-3"><i
+                                    class="ph-fill ph-check-circle text-green-500"></i><span
+                                    class="font-bold text-xs sm:text-base">🚫 Chặn game & web không lành mạnh</span>
+                            </li>
+                            <li class="flex items-center gap-3"><i
+                                    class="ph-fill ph-check-circle text-green-500"></i><span
+                                    class="font-bold text-xs sm:text-base">✨ Trợ lý AI hỗ trợ học tập</span></li>
+                        </ul>
+                        <a href="apps.html"
+                            class="hero-gradient text-white px-8 py-4 rounded-xl font-black shadow-xl uppercase text-xs tracking-widest inline-block">Khám
+                            phá công cụ <i class="ph-bold ph-arrow-right"></i></a>
+                    </div>
+                    <div class="hidden md:block relative">
+                        <div
+                            class="glass-card p-4 rounded-[2.5rem] shadow-2xl z-10 border-4 border-white/80 transform rotate-2 hover:rotate-0 transition-all duration-700">
+                            <div
+                                class="bg-gray-100 dark:bg-slate-800 rounded-[1.8rem] overflow-hidden aspect-video flex items-center justify-center">
+                                <div class="text-center p-8">
+                                    <i class="ph-duotone ph-sparkle text-7xl text-ns-purple mb-4 animate-pulse"></i>
+                                    <p
+                                        class="font-black text-xl text-slate-800 dark:text-white uppercase tracking-wider">
+                                        AITECH Hub</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== ASSESSMENT CTA ========== -->
+    <section class="py-16 sm:py-24 px-4 bg-ns-purple-soft/30 dark:bg-slate-900/50">
+        <div class="max-w-4xl mx-auto text-center">
+            <h2 class="text-2xl sm:text-4xl font-extrabold mb-6 dark:text-white leading-tight">Đánh Giá <span
+                    class="text-ns-purple italic">Năng Lực Tự Học</span> 📊</h2>
+            <p class="text-gray-500 dark:text-gray-400 mb-8 max-w-2xl mx-auto">Trả lời bộ câu hỏi ngắn để khám phá điểm
+                mạnh, điểm cần cải thiện, và nhận gợi ý phương pháp học tập phù hợp.</p>
+            <a href="assessment.html"
+                class="hero-gradient text-white px-10 py-4 rounded-xl font-black shadow-xl uppercase text-sm tracking-widest inline-block hover:scale-105 transition-transform">Bắt
+                đầu đánh giá <i class="ph-bold ph-arrow-right ml-2"></i></a>
+        </div>
+    </section>
+
+    <!-- ========== YOUTUBE CHANNELS ========== -->
+    <section class="py-16 sm:py-24 px-4">
+        <div class="max-w-6xl mx-auto text-center">
+            <h2 class="text-2xl sm:text-4xl font-extrabold dark:text-white mb-12 leading-tight">Kênh YouTube Truyền Cảm
+                Hứng 📺</h2>
+            <div class="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+                <a href="https://www.youtube.com/@BeyondLimitsSpi" target="_blank" rel="noopener noreferrer"
+                    class="group bg-white dark:bg-slate-800 p-6 rounded-[2rem] shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all border border-ns-purple/5">
+                    <div
+                        class="w-16 h-16 mx-auto bg-purple-100 dark:bg-purple-900/50 rounded-2xl flex items-center justify-center text-ns-purple mb-6 group-hover:scale-110 transition-transform shadow-inner">
+                        <i class="ph-fill ph-brain text-3xl"></i>
+                    </div>
+                    <h3
+                        class="font-bold text-base sm:text-lg dark:text-white group-hover:text-ns-purple transition-colors">
+                        Beyond Limits</h3>
+                    <p class="text-xs text-gray-500 mt-3">Phát triển tư duy, kỷ luật.</p>
+                </a>
+                <a href="https://www.youtube.com/@emilyne." target="_blank" rel="noopener noreferrer"
+                    class="group bg-white dark:bg-slate-800 p-6 rounded-[2rem] shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all border border-ns-purple/5">
+                    <div
+                        class="w-16 h-16 mx-auto bg-pink-100 dark:bg-pink-900/50 rounded-2xl flex items-center justify-center text-pink-500 mb-6 group-hover:scale-110 transition-transform shadow-inner">
+                        <i class="ph-fill ph-coffee text-3xl"></i>
+                    </div>
+                    <h3
+                        class="font-bold text-base sm:text-lg dark:text-white group-hover:text-pink-600 transition-colors">
+                        Emilyne</h3>
+                    <p class="text-xs text-gray-500 mt-3">Vlog học tập nhẹ nhàng.</p>
+                </a>
+                <a href="https://www.youtube.com/@jellyyyday" target="_blank" rel="noopener noreferrer"
+                    class="group bg-white dark:bg-slate-800 p-6 rounded-[2rem] shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all border border-ns-purple/5">
+                    <div
+                        class="w-16 h-16 mx-auto bg-orange-100 dark:bg-orange-900/50 rounded-2xl flex items-center justify-center text-orange-500 mb-6 group-hover:scale-110 transition-transform shadow-inner">
+                        <i class="ph-fill ph-sparkle text-3xl"></i>
+                    </div>
+                    <h3
+                        class="font-bold text-base sm:text-lg dark:text-white group-hover:text-orange-500 transition-colors">
+                        Jellyyyday</h3>
+                    <p class="text-xs text-gray-500 mt-3">Study With Me cực chill.</p>
+                </a>
+                <a href="https://www.youtube.com/@Bacademy-onthivao10ieltssat" target="_blank" rel="noopener noreferrer"
+                    class="group bg-white dark:bg-slate-800 p-6 rounded-[2rem] shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all border border-ns-purple/5">
+                    <div
+                        class="w-16 h-16 mx-auto bg-blue-100 dark:bg-blue-900/50 rounded-2xl flex items-center justify-center text-blue-500 mb-6 group-hover:scale-110 transition-transform shadow-inner">
+                        <i class="ph-fill ph-graduation-cap text-3xl"></i>
+                    </div>
+                    <h3
+                        class="font-bold text-base sm:text-lg dark:text-white group-hover:text-blue-500 transition-colors">
+                        Bacademy</h3>
+                    <p class="text-xs text-gray-500 mt-3">Ôn thi IELTS & SAT chuyên sâu.</p>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== FOOTER ========== -->
+    <footer class="bg-white dark:bg-slate-900 pt-16 sm:pt-24 pb-12 px-4 border-t border-ns-purple/5">
+        <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 sm:gap-16 mb-20 text-center md:text-left">
+            <div class="col-span-1 md:col-span-2 space-y-6">
+                <h3
+                    class="text-2xl sm:text-3xl font-black text-ns-purple flex items-center justify-center md:justify-start gap-3 uppercase">
+                    <i class="ph-fill ph-sparkle"></i> AITECH
+                </h3>
+                <p class="text-gray-500 max-w-sm mx-auto md:mx-0 italic">"Tương lai thuộc về những ai tin vào vẻ đẹp của
+                    ước mơ học tập."</p>
+                <div
+                    class="inline-block bg-ns-purple/10 px-5 py-2 rounded-xl text-ns-purple font-black text-xs uppercase border border-ns-purple/10">
+                    Dự án AITECH — 2026
+                </div>
+            </div>
+            <div class="space-y-6">
+                <h4 class="font-black text-slate-800 dark:text-white uppercase text-xs tracking-widest">Tác giả
+                </h4>
+                <div class="space-y-3">
+                    <div class="flex items-center justify-center md:justify-start gap-3">
+                        <div
+                            class="w-10 h-10 rounded-xl bg-ns-purple-soft dark:bg-purple-900/30 flex items-center justify-center text-ns-purple shadow-sm">
+                            <i class="ph-fill ph-code text-xl"></i>
+                        </div>
+                        <div class="text-left">
+                            <span class="font-bold text-sm">Trần Đình Mạnh Phong</span>
+                            <span class="block text-xs text-gray-400 uppercase font-bold">Tác giả — Developer</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="space-y-6">
+                <h4 class="font-black text-slate-800 dark:text-white uppercase text-xs tracking-widest">Liên kết
+                </h4>
+                <div class="space-y-2 text-sm font-bold">
+                    <a href="thuctrang.html" class="block text-gray-500 hover:text-ns-purple transition-colors">Thực
+                        trạng</a>
+                    <a href="giaiphap.html" class="block text-gray-500 hover:text-ns-purple transition-colors">Giải
+                        pháp</a>
+                    <a href="portal_tai_nguyen.html"
+                        class="block text-gray-500 hover:text-ns-purple transition-colors">Kho tài nguyên</a>
+                    <a href="apps.html" class="block text-gray-500 hover:text-ns-purple transition-colors">Ứng dụng</a>
+                    <a href="assessment.html" class="block text-gray-500 hover:text-ns-purple transition-colors">Đánh
+                        giá tự học</a>
+                    <a href="about.html" class="block text-gray-500 hover:text-ns-purple transition-colors">Về
+                        AITECH</a>
+                </div>
+            </div>
+        </div>
+        <div
+            class="border-t border-ns-purple/5 pt-10 text-center text-gray-400 text-xs font-bold uppercase tracking-[0.3em]">
+            <p>AITECH — Dành cho học sinh THPT Việt Nam</p>
+            <p class="mt-3 opacity-50">AITECH &copy; 2026</p>
+        </div>
+    </footer>
+
+    <script>
+        // Chatbot toggle
+        function toggleAIHub() {
+            document.getElementById('ai-hub-modal').classList.toggle('hidden');
+            if (typeof nsUpdateApiKeyUI === 'function') nsUpdateApiKeyUI();
+        }
+
+        // Simple markdown → HTML
+        function nsRenderMd(t) {
+            return t
+                .replace(/```([\s\S]*?)```/g, '<pre style="background:#1e1b2e;color:#e0def4;padding:12px;border-radius:12px;font-size:12px;overflow-x:auto;margin:8px 0">$1</pre>')
+                .replace(/`([^`]+)`/g, '<code style="background:#7c5cfc20;color:#7c5cfc;padding:2px 6px;border-radius:6px;font-size:12px">$1</code>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong class="text-ns-purple font-black">$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '<a href="$2" target="_blank" class="text-ns-purple underline font-bold">$1</a>')
+                .replace(/^### (.+)$/gm, '<h4 class="font-black text-sm mt-3 mb-1 text-slate-800">$1</h4>')
+                .replace(/^## (.+)$/gm, '<h3 class="font-black text-base mt-3 mb-1 text-slate-800">$1</h3>')
+                .replace(/^- (.+)$/gm, '<div style="padding-left:12px">&bull; $1</div>')
+                .replace(/\n/g, '<br>');
+        }
+
+        // Chatbot ask
+        async function askAI(predefined = null) {
+            const inp = document.getElementById('ai-input');
+            const container = document.getElementById('ai-response-container');
+            const res = document.getElementById('ai-response');
+            const q = predefined || inp.value.trim();
+            if (!q) return;
+            inp.value = '';
+            container.classList.remove('hidden');
+            const qB = '<div style="text-align:right;margin-bottom:12px"><span style="background:#7c5cfc;color:white;padding:6px 14px;border-radius:16px 16px 4px 16px;font-size:13px;display:inline-block;max-width:80%">' + q.replace(/</g, '&lt;') + '</span></div>';
+            res.innerHTML = qB + '<div><i class="ph-bold ph-circle-notch animate-spin text-ns-purple"></i> Đang suy nghĩ...</div>';
+            // Stream callback: update response in real-time
+            window._nsChatStreamCallback = (partial) => {
+                res.innerHTML = qB + '<div style="background:#f3f0ff;color:#1e1b2e;padding:12px 16px;border-radius:4px 16px 16px 16px">' + nsRenderMd(partial) + '<span class="animate-pulse" style="color:#7c5cfc">▌</span></div>';
+                res.scrollTop = res.scrollHeight;
+            };
+            const text = await nsChatbotAsk(q);
+            window._nsChatStreamCallback = null;
+            res.innerHTML = qB + '<div style="background:#f3f0ff;color:#1e1b2e;padding:12px 16px;border-radius:4px 16px 16px 16px">' + nsRenderMd(text) + '</div>';
+            res.scrollTop = res.scrollHeight;
+        }
+        document.getElementById('ai-input').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); askAI() } });
+    </script>
+</body>
+
+</html>
