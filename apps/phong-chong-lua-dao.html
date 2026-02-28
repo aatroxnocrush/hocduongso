@@ -1,0 +1,542 @@
+﻿<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Phòng Chống Lừa Đảo — AITECH</title>
+    <meta name="description"
+        content="Nhận diện lừa đảo trực tuyến, quiz tình huống, AI phân tích tin nhắn — bảo vệ học sinh THPT.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="../aitech.css">
+    <script>tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Quicksand', 'sans-serif'] }, colors: { 'ns-purple': '#7c5cfc', 'ns-purple-light': '#a78bfa', 'ns-purple-soft': '#ede9fe', 'dark-text': '#5A4A4A' } } } }</script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="../firebase-config.js"></script>
+    <script src="../aitech.js"></script>
+</head>
+
+<body class="relative min-h-screen font-sans text-dark-text dark:text-gray-100 pb-20">
+
+    <div class="blob bg-red-100 w-[500px] h-[500px] rounded-full top-[-100px] left-[-150px] animate-float"></div>
+    <div class="blob bg-orange-100 w-[400px] h-[400px] rounded-full bottom-20 right-[-100px]"></div>
+
+    <button onclick="toggleTheme()"
+        class="fixed bottom-8 right-8 z-[60] bg-white dark:bg-slate-800 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-yellow-500 border-4 border-white dark:border-slate-700 hover:scale-110 transition-all">
+        <i class="ph-fill ph-sun text-2xl dark:hidden"></i><i
+            class="ph-fill ph-moon text-2xl text-blue-300 hidden dark:block"></i>
+    </button>
+
+    <nav class="p-4 sm:p-6 sticky top-0 z-50" id="navbar">
+        <div class="max-w-6xl mx-auto flex justify-between items-center glass-card px-6 py-3 rounded-full">
+            <a href="../apps.html"
+                class="flex items-center gap-2 text-gray-500 hover:text-ns-purple transition-colors font-bold group"><i
+                    class="ph-bold ph-arrow-left group-hover:-translate-x-1 transition-transform"></i> Ứng dụng</a>
+            <div class="font-bold text-lg text-red-500 flex items-center gap-2"><i
+                    class="ph-fill ph-shield-warning"></i><span class="hidden sm:inline">Phòng Chống Lừa Đảo</span>
+            </div>
+            <a href="../index.html"
+                class="text-sm font-bold text-gray-500 hover:text-ns-purple transition-colors hidden md:block">Trang chủ
+                <i class="ph-bold ph-arrow-right"></i></a>
+        </div>
+    </nav>
+
+    <header class="text-center px-4 mb-12 mt-8 reveal">
+        <span
+            class="inline-block bg-red-50 dark:bg-red-900/20 text-red-500 text-[10px] font-black px-4 py-1.5 rounded-full shadow-sm mb-4 uppercase tracking-widest border border-red-200 dark:border-red-800">An
+            toàn mạng</span>
+        <h1 class="text-3xl md:text-5xl font-extrabold dark:text-white mb-4 leading-tight">Phòng Chống <span
+                class="text-red-500 italic">Lừa Đảo</span> 🛡️</h1>
+        <p class="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">Nhận diện chiêu trò, kiểm tra tin nhắn đáng ngờ,
+            bảo vệ bản thân trong thế giới số.</p>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-4">
+
+        <!-- TAB NAV -->
+        <div class="flex flex-wrap gap-2 justify-center mb-10">
+            <button onclick="switchTab('guide')"
+                class="tab-item active bg-red-500 text-white px-5 py-2 rounded-full text-xs font-bold transition-all"
+                data-tab="guide">🔍 Cẩm nang nhận diện</button>
+            <button onclick="switchTab('quiz')"
+                class="tab-item bg-gray-100 dark:bg-slate-800 text-gray-500 px-5 py-2 rounded-full text-xs font-bold transition-all"
+                data-tab="quiz">🧩 Quiz tình huống</button>
+            <button onclick="switchTab('simulator')"
+                class="tab-item bg-gray-100 dark:bg-slate-800 text-gray-500 px-5 py-2 rounded-full text-xs font-bold transition-all"
+                data-tab="simulator">💬 Mô phỏng lừa đảo</button>
+            <button onclick="switchTab('ai')"
+                class="tab-item bg-gray-100 dark:bg-slate-800 text-gray-500 px-5 py-2 rounded-full text-xs font-bold transition-all"
+                data-tab="ai">🤖 AI phân tích</button>
+        </div>
+
+        <!-- SOS BAR -->
+        <div
+            class="bg-gradient-to-r from-red-500 to-orange-500 rounded-2xl p-4 mb-10 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3 text-white">
+                <i class="ph-fill ph-phone-call text-3xl animate-pulse"></i>
+                <div>
+                    <p class="font-bold text-sm">Đường dây nóng An Ninh Mạng</p>
+                    <p class="text-xs opacity-80">Gọi ngay nếu bạn đang bị lừa đảo</p>
+                </div>
+            </div>
+            <div class="flex gap-3">
+                <a href="tel:113"
+                    class="bg-white text-red-500 px-5 py-2 rounded-xl font-black text-sm hover:scale-105 transition-all shadow-lg">📞
+                    113</a>
+                <a href="tel:156"
+                    class="bg-white text-orange-500 px-5 py-2 rounded-xl font-black text-sm hover:scale-105 transition-all shadow-lg">📞
+                    156</a>
+            </div>
+        </div>
+
+        <!-- TAB: GUIDE -->
+        <section id="tab-guide" class="tab-content">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                <div
+                    class="glass-card p-6 rounded-[2rem] border-l-4 border-red-400 hover:-translate-y-1 transition-all">
+                    <h3 class="font-bold text-lg mb-3 dark:text-white">🎣 Phishing (Giả mạo)</h3>
+                    <p class="text-sm text-gray-500 mb-3">Giả trang web ngân hàng, email trúng thưởng, link giả mạo yêu
+                        cầu đăng nhập.</p>
+                    <div class="bg-red-50 dark:bg-red-900/20 p-3 rounded-xl">
+                        <p class="text-xs font-bold text-red-600 dark:text-red-400">⚠️ Dấu hiệu: URL sai chính tả, yêu
+                            cầu nhập mật khẩu qua link, email không rõ nguồn</p>
+                    </div>
+                </div>
+                <div
+                    class="glass-card p-6 rounded-[2rem] border-l-4 border-orange-400 hover:-translate-y-1 transition-all">
+                    <h3 class="font-bold text-lg mb-3 dark:text-white">📱 Vishing (Gọi điện giả)</h3>
+                    <p class="text-sm text-gray-500 mb-3">Giả công an, ngân hàng, viện kiểm sát gọi điện đe dọa, yêu cầu
+                        chuyển tiền.</p>
+                    <div class="bg-orange-50 dark:bg-orange-900/20 p-3 rounded-xl">
+                        <p class="text-xs font-bold text-orange-600 dark:text-orange-400">⚠️ Dấu hiệu: Yêu cầu giữ bí
+                            mật, đe dọa, bắt chuyển tiền gấp</p>
+                    </div>
+                </div>
+                <div
+                    class="glass-card p-6 rounded-[2rem] border-l-4 border-yellow-400 hover:-translate-y-1 transition-all">
+                    <h3 class="font-bold text-lg mb-3 dark:text-white">💰 Việc Nhẹ Lương Cao</h3>
+                    <p class="text-sm text-gray-500 mb-3">Tuyển like, share, review → nạp tiền → không rút được.
+                        Multi-level marketing ẩn.</p>
+                    <div class="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-xl">
+                        <p class="text-xs font-bold text-yellow-700 dark:text-yellow-400">⚠️ Dấu hiệu: Thu nhập quá cao,
+                            yêu cầu đóng phí trước, kéo thêm người</p>
+                    </div>
+                </div>
+                <div
+                    class="glass-card p-6 rounded-[2rem] border-l-4 border-purple-400 hover:-translate-y-1 transition-all">
+                    <h3 class="font-bold text-lg mb-3 dark:text-white">💕 Romance Scam</h3>
+                    <p class="text-sm text-gray-500 mb-3">Kết bạn qua mạng xã hội, tán tỉnh → mượn tiền / xin ảnh nhạy
+                        cảm → tống tiền.</p>
+                    <div class="bg-purple-50 dark:bg-purple-900/20 p-3 rounded-xl">
+                        <p class="text-xs font-bold text-purple-600 dark:text-purple-400">⚠️ Dấu hiệu: Quá hoàn hảo,
+                            nhanh chóng tỏ tình, lý do mượn tiền khẩn cấp</p>
+                    </div>
+                </div>
+                <div
+                    class="glass-card p-6 rounded-[2rem] border-l-4 border-blue-400 hover:-translate-y-1 transition-all">
+                    <h3 class="font-bold text-lg mb-3 dark:text-white">🎮 Scam Game/App</h3>
+                    <p class="text-sm text-gray-500 mb-3">Hack game miễn phí, nạp thẻ giá rẻ, app kiếm tiền, airdrop
+                        crypto giả.</p>
+                    <div class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-xl">
+                        <p class="text-xs font-bold text-blue-600 dark:text-blue-400">⚠️ Dấu hiệu: Quá tốt để thật, yêu
+                            cầu tải app lạ, nhập tài khoản game</p>
+                    </div>
+                </div>
+                <div
+                    class="glass-card p-6 rounded-[2rem] border-l-4 border-green-400 hover:-translate-y-1 transition-all">
+                    <h3 class="font-bold text-lg mb-3 dark:text-white">🏪 Mua Hàng Online Giả</h3>
+                    <p class="text-sm text-gray-500 mb-3">Shop ảo bán hàng giá rẻ, nhận tiền rồi block. Hàng fake, hàng
+                        kém chất lượng.</p>
+                    <div class="bg-green-50 dark:bg-green-900/20 p-3 rounded-xl">
+                        <p class="text-xs font-bold text-green-600 dark:text-green-400">⚠️ Dấu hiệu: Giá rẻ bất thường,
+                            chỉ nhận CK trước, shop mới không review</p>
+                    </div>
+                </div>
+            </div>
+
+            <div
+                class="glass-card p-6 rounded-[2rem] bg-gradient-to-br from-green-50 to-white dark:from-green-900/10 dark:to-slate-900">
+                <h3 class="font-bold text-lg dark:text-white mb-4">✅ 5 Quy Tắc Vàng Chống Lừa Đảo</h3>
+                <div class="space-y-3">
+                    <div class="flex gap-3 items-start"><span class="text-xl">1️⃣</span>
+                        <p class="text-sm"><strong>Không bao giờ gửi tiền</strong> cho người lạ trên mạng, dù bất kỳ lý
+                            do gì.</p>
+                    </div>
+                    <div class="flex gap-3 items-start"><span class="text-xl">2️⃣</span>
+                        <p class="text-sm"><strong>Không chia sẻ OTP, mật khẩu</strong>, mã xác thực cho ai — kể cả
+                            "nhân viên ngân hàng".</p>
+                    </div>
+                    <div class="flex gap-3 items-start"><span class="text-xl">3️⃣</span>
+                        <p class="text-sm"><strong>Kiểm tra URL</strong> trước khi nhập thông tin — tìm ổ khóa 🔒 và
+                            domain chính xác.</p>
+                    </div>
+                    <div class="flex gap-3 items-start"><span class="text-xl">4️⃣</span>
+                        <p class="text-sm"><strong>Quá tốt = Quá giả</strong> — Việc nhẹ lương cao, trúng thưởng bất ngờ
+                            → 99% lừa đảo.</p>
+                    </div>
+                    <div class="flex gap-3 items-start"><span class="text-xl">5️⃣</span>
+                        <p class="text-sm"><strong>Nói với người lớn</strong> — Khi nghi ngờ, hỏi bố mẹ/thầy cô/gọi 113
+                            TRƯỚC khi hành động.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB: QUIZ -->
+        <section id="tab-quiz" class="tab-content hidden">
+            <div class="glass-card p-6 sm:p-10 rounded-[2rem]">
+                <h2 class="text-xl font-bold dark:text-white mb-2">🧩 Quiz: Bạn Có Nhận Ra Lừa Đảo?</h2>
+                <p class="text-sm text-gray-500 mb-6">10 tình huống thực tế — chọn cách xử lý đúng nhất.</p>
+                <div id="quiz-container"></div>
+                <div id="quiz-result" class="hidden mt-6"></div>
+            </div>
+        </section>
+
+        <!-- TAB: SIMULATOR -->
+        <section id="tab-simulator" class="tab-content hidden">
+            <div class="glass-card p-6 sm:p-10 rounded-[2rem]">
+                <h2 class="text-xl font-bold dark:text-white mb-2">💬 Mô Phỏng Tin Nhắn Lừa Đảo</h2>
+                <p class="text-sm text-gray-500 mb-6">Xem tin nhắn giống thật và tập nhận diện dấu hiệu lừa đảo.</p>
+                <div id="sim-container"></div>
+            </div>
+        </section>
+
+        <!-- TAB: AI ANALYZE -->
+        <section id="tab-ai" class="tab-content hidden">
+            <div class="glass-card p-6 sm:p-10 rounded-[2rem]">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-xl flex items-center justify-center">
+                        <i class="ph-fill ph-shield-check text-2xl text-red-500"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold dark:text-white">AI Phân Tích Lừa Đảo</h2>
+                        <p class="text-xs text-gray-500">Paste tin nhắn/email nghi ngờ để AI kiểm tra</p>
+                    </div>
+                </div>
+                <textarea id="scam-input"
+                    placeholder="Dán tin nhắn, email, hoặc mô tả tình huống bạn nghi ngờ là lừa đảo vào đây...&#10;&#10;Ví dụ: 'Bạn ơi, anh/chị đang tuyển CTV like video TikTok, mỗi ngày kiếm 200-500k, chỉ cần điện thoại...'"
+                    class="w-full bg-white dark:bg-slate-800 border-2 border-red-300/30 rounded-2xl p-4 text-sm focus:outline-none focus:border-red-400 transition-all h-32 dark:text-white font-semibold resize-none mb-4"></textarea>
+                <div class="flex justify-between items-center">
+                    <p class="text-xs text-gray-400">💡 AI sẽ phân tích dấu hiệu lừa đảo và đưa ra cảnh báo</p>
+                    <button onclick="analyzeScam()"
+                        class="bg-red-500 text-white px-6 py-2 rounded-xl font-bold hover:bg-red-600 transition-all text-sm">
+                        🔍 Phân tích
+                    </button>
+                </div>
+                <div id="scam-result"
+                    class="hidden mt-6 bg-white dark:bg-slate-900 rounded-2xl p-6 border border-red-200 dark:border-red-800 text-sm leading-relaxed">
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="text-center mt-16 text-gray-400 dark:text-gray-600 text-sm pb-10">
+        <div class="flex justify-center items-center gap-2 mb-4"><i
+                class="ph-fill ph-sparkle text-2xl text-ns-purple"></i><span
+                class="font-bold text-slate-800 dark:text-white uppercase tracking-wider">AITECH</span></div>
+        <p>Dành cho học sinh THPT Việt Nam — 2026</p>
+    </footer>
+
+    <script>
+        // ============================================================
+        // TAB SWITCHING
+        // ============================================================
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById('tab-' + tab).classList.remove('hidden');
+            document.querySelectorAll('.tab-item').forEach(btn => {
+                if (btn.dataset.tab === tab) {
+                    btn.className = 'tab-item active bg-red-500 text-white px-5 py-2 rounded-full text-xs font-bold transition-all';
+                } else {
+                    btn.className = 'tab-item bg-gray-100 dark:bg-slate-800 text-gray-500 px-5 py-2 rounded-full text-xs font-bold transition-all hover:bg-gray-200';
+                }
+            });
+        }
+
+        // ============================================================
+        // QUIZ
+        // ============================================================
+        const SCAM_QUIZ = [
+            {
+                situation: "Bạn nhận được tin nhắn Facebook: 'Chúc mừng bạn trúng thưởng iPhone 16 Pro! Nhấn link để nhận: bit.ly/nhan-qua-free'",
+                options: ["Nhấn link ngay vì sợ hết hạn", "Kiểm tra trang chính thức của chương trình", "Bỏ qua và báo cáo spam"],
+                correct: 2,
+                explain: "Đây là tin nhắn phishing điển hình. Không bao giờ nhấn link từ nguồn không xác thực. Nếu trúng thưởng thật, ban tổ chức sẽ liên hệ qua kênh chính thức."
+            },
+            {
+                situation: "Một người lạ trên Zalo nói là 'Công an quận' và yêu cầu bạn chuyển tiền vào tài khoản để 'xác minh danh tính' nếu không sẽ bị bắt.",
+                options: ["Chuyển tiền ngay vì sợ bị bắt", "Gác máy và gọi 113 để xác minh", "Nhờ bạn bè chuyển giúp"],
+                correct: 1,
+                explain: "Công an KHÔNG BAO GIỜ yêu cầu chuyển tiền qua điện thoại/Zalo. Đây là chiêu giả danh công an rất phổ biến. Hãy gác máy và gọi 113."
+            },
+            {
+                situation: "Bạn thấy quảng cáo: 'Tuyển CTV like video TikTok, kiếm 200-500k/ngày, chỉ cần điện thoại. Nạp 200k đặt cọc để bắt đầu.'",
+                options: ["Nạp 200k thử xem", "Từ chối vì việc thật không cần đóng phí", "Hỏi thêm thông tin công ty"],
+                correct: 1,
+                explain: "Việc hợp pháp KHÔNG yêu cầu đóng phí hay nạp tiền trước. Đây là chiêu 'việc nhẹ lương cao' — khi bạn nạp tiền xong, họ sẽ yêu cầu nạp thêm hoặc biến mất."
+            },
+            {
+                situation: "Một 'anh trai' quen qua Instagram 2 tuần, tỏ tình rất ngọt ngào, nay nói bị kẹt ở sân bay và cần bạn chuyển 5 triệu giúp.",
+                options: ["Chuyển tiền vì thương anh ấy", "Từ chối lịch sự và block", "Video call xác minh trước"],
+                correct: 1,
+                explain: "Đây là Romance Scam. Đối tượng tạo profile giả, tán tỉnh nhanh, rồi bịa lý do mượn tiền. Quen 2 tuần trên mạng mà đã mượn tiền → 99% lừa đảo."
+            },
+            {
+                situation: "Bạn nhận email từ 'Vietcombank' nói tài khoản bị khóa, cần đăng nhập tại link kèm theo để mở lại.",
+                options: ["Đăng nhập qua link trong email", "Mở app Vietcombank chính thức để kiểm tra", "Reply email hỏi thêm"],
+                correct: 1,
+                explain: "Ngân hàng không bao giờ gửi link đăng nhập qua email. Luôn truy cập trực tiếp app hoặc website chính thức (vietcombank.com.vn) để kiểm tra."
+            },
+            {
+                situation: "Bạn bè chia sẻ link web hack kim cương game miễn phí và bảo 'thử đi, mình hack thành công rồi'.",
+                options: ["Thử ngay vì bạn bè đã thành công", "Không nhấn vì có thể bị mất tài khoản", "Tải app hack về để kiểm tra"],
+                correct: 1,
+                explain: "Web hack game là bẫy để đánh cắp tài khoản game và thông tin cá nhân. Tài khoản bạn bè cũng có thể đã bị hack và đang phát tán link lừa đảo."
+            },
+            {
+                situation: "Shopee gửi SMS: 'Đơn hàng #SP391 bị giữ tại kho. Xác nhận tại: shopee-xacnhan.xyz' (lưu ý domain).",
+                options: ["Nhấn link xác nhận ngay", "Mở app Shopee chính thức kiểm tra đơn hàng", "Gọi hotline Shopee"],
+                correct: 1,
+                explain: "Domain shopee-xacnhan.xyz KHÔNG phải của Shopee. Domain chính thức là shopee.vn. Luôn kiểm tra trực tiếp trên app, không nhấn link SMS."
+            },
+            {
+                situation: "Một nhóm Telegram mời bạn đầu tư crypto, cam kết lãi 30%/tháng, 'không rủi ro'.",
+                options: ["Đầu tư ít để thử", "Từ chối vì lãi quá cao là bất thường", "Mời thêm bạn bè cùng đầu tư"],
+                correct: 1,
+                explain: "Lãi 30%/tháng là phi thực tế. Đây là dấu hiệu của Ponzi scheme — dùng tiền người sau trả cho người trước, cuối cùng sập hết."
+            },
+            {
+                situation: "Bạn muốn mua giày Nike giá chỉ 200k trên một fanpage Facebook mới lập, không có review.",
+                options: ["Mua ngay vì giá quá rẻ", "Tìm shop Nike chính hãng hoặc sàn uy tín", "Chuyển khoản trước rồi đợi hàng"],
+                correct: 1,
+                explain: "Giày Nike chính hãng không thể 200k. Fanpage mới, không review = rủi ro cao. Luôn mua trên sàn uy tín có bảo vệ người mua."
+            },
+            {
+                situation: "Ai đó gửi file 'Bài_tập_Toán.exe' qua nhóm lớp trên Zalo.",
+                options: ["Tải về mở xem bài tập", "Không mở vì file .exe là phần mềm, không phải tài liệu", "Gửi lại cho nhóm lớp khác"],
+                correct: 1,
+                explain: "File .exe là file chạy phần mềm, KHÔNG phải tài liệu. Bài tập phải là .doc, .pdf, .pptx. File .exe có thể chứa virus hoặc mã độc."
+            }
+        ];
+
+        let quizAnswers = {};
+        let quizSubmitted = false;
+
+        function renderQuiz() {
+            const container = document.getElementById('quiz-container');
+            container.innerHTML = SCAM_QUIZ.map((q, i) => `
+        <div class="mb-8 p-5 rounded-2xl bg-white/50 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-700" id="q-${i}">
+            <div class="flex items-start gap-3 mb-4">
+                <span class="bg-red-100 dark:bg-red-900/30 text-red-500 w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm shrink-0">${i + 1}</span>
+                <p class="font-bold text-sm dark:text-white">${q.situation}</p>
+            </div>
+            <div class="space-y-2 ml-11">
+                ${q.options.map((opt, j) => `
+                    <button onclick="selectQuizAnswer(${i}, ${j})"
+                        class="quiz-opt-${i} w-full text-left px-4 py-3 rounded-xl text-sm font-semibold transition-all border-2
+                        ${quizSubmitted ?
+                    (j === q.correct ? 'bg-green-50 dark:bg-green-900/20 border-green-400 text-green-700 dark:text-green-400' :
+                        quizAnswers[i] === j ? 'bg-red-50 dark:bg-red-900/20 border-red-400 text-red-600' :
+                            'bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-slate-600 text-gray-500') :
+                    (quizAnswers[i] === j ? 'bg-ns-purple-soft dark:bg-purple-900/20 border-ns-purple text-ns-purple' :
+                        'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-600 text-gray-600 dark:text-gray-300 hover:border-ns-purple/50')}
+                        ${quizSubmitted ? 'cursor-default' : ''}"
+                        ${quizSubmitted ? 'disabled' : ''}>
+                        ${String.fromCharCode(65 + j)}. ${opt}
+                        ${quizSubmitted && j === q.correct ? ' ✅' : ''}
+                        ${quizSubmitted && quizAnswers[i] === j && j !== q.correct ? ' ❌' : ''}
+                    </button>
+                `).join('')}
+            </div>
+            ${quizSubmitted ? `<div class="ml-11 mt-3 p-3 rounded-xl ${quizAnswers[i] === q.correct ? 'bg-green-50 dark:bg-green-900/20' : 'bg-orange-50 dark:bg-orange-900/20'}">
+                <p class="text-xs font-bold ${quizAnswers[i] === q.correct ? 'text-green-600 dark:text-green-400' : 'text-orange-600 dark:text-orange-400'}">${quizAnswers[i] === q.correct ? '✅ Chính xác!' : '❌ Sai rồi!'} ${q.explain}</p>
+            </div>` : ''}
+        </div>
+    `).join('');
+
+            if (!quizSubmitted) {
+                const answered = Object.keys(quizAnswers).length;
+                container.innerHTML += `
+            <div class="text-center">
+                <button onclick="submitScamQuiz()" class="bg-red-500 text-white px-10 py-3 rounded-xl font-bold shadow-xl hover:scale-105 transition-all disabled:opacity-50" ${answered < SCAM_QUIZ.length ? 'disabled' : ''}>
+                    Nộp bài (${answered}/${SCAM_QUIZ.length})
+                </button>
+            </div>
+        `;
+            }
+        }
+
+        function selectQuizAnswer(qIndex, optIndex) {
+            if (quizSubmitted) return;
+            quizAnswers[qIndex] = optIndex;
+            renderQuiz();
+        }
+
+        function submitScamQuiz() {
+            quizSubmitted = true;
+            let correct = 0;
+            SCAM_QUIZ.forEach((q, i) => { if (quizAnswers[i] === q.correct) correct++; });
+            renderQuiz();
+
+            const pct = Math.round((correct / SCAM_QUIZ.length) * 100);
+            let grade, color, emoji;
+            if (pct >= 80) { grade = "Xuất sắc"; color = "green"; emoji = "🏆"; }
+            else if (pct >= 60) { grade = "Khá tốt"; color = "blue"; emoji = "👍"; }
+            else if (pct >= 40) { grade = "Cần cải thiện"; color = "orange"; emoji = "⚠️"; }
+            else { grade = "Nguy hiểm!"; color = "red"; emoji = "🚨"; }
+
+            document.getElementById('quiz-result').classList.remove('hidden');
+            document.getElementById('quiz-result').innerHTML = `
+        <div class="bg-${color}-50 dark:bg-${color}-900/20 rounded-2xl p-6 text-center">
+            <p class="text-4xl mb-2">${emoji}</p>
+            <p class="text-2xl font-bold dark:text-white">${correct}/${SCAM_QUIZ.length} câu đúng</p>
+            <p class="text-lg font-bold" style="color:${color === 'green' ? '#22c55e' : color === 'blue' ? '#3b82f6' : color === 'orange' ? '#f59e0b' : '#ef4444'}">${grade}</p>
+            <button onclick="resetScamQuiz()" class="mt-4 bg-white dark:bg-slate-800 text-gray-600 px-6 py-2 rounded-xl font-bold text-sm hover:bg-gray-100 transition-all border">
+                <i class="ph-bold ph-arrow-counter-clockwise"></i> Làm lại
+            </button>
+        </div>
+    `;
+        }
+
+        function resetScamQuiz() {
+            quizAnswers = {};
+            quizSubmitted = false;
+            document.getElementById('quiz-result').classList.add('hidden');
+            renderQuiz();
+        }
+
+        // ============================================================
+        // SIMULATOR
+        // ============================================================
+        const SCAM_SIMS = [
+            {
+                from: "SĐT Lạ (+84 xxx)", type: "SMS",
+                messages: [
+                    { sender: "scammer", text: "VIETCOMBANK: TK cua ban vua bi tru 15.000.000d. Neu khong phai ban, xac nhan tai: vietcombank-xacnhan.co/login" },
+                ],
+                redFlags: ["Domain giả (vietcombank-xacnhan.co thay vì vietcombank.com.vn)", "Tạo cảm giác khẩn cấp", "Yêu cầu nhấn link"],
+                advice: "Mở app Vietcombank chính thức kiểm tra. Ngân hàng không gửi link đăng nhập qua SMS."
+            },
+            {
+                from: "Người lạ trên Zalo", type: "Zalo",
+                messages: [
+                    { sender: "scammer", text: "Em ơi, anh thấy em xinh quá ❤️ Anh đang ở nước ngoài, anh gửi quà về cho em nhé!" },
+                    { sender: "scammer", text: "Bưu điện nói phải đóng 2 triệu phí hải quan mới giao được. Em đóng giúp anh, anh về sẽ trả gấp 10 😘" },
+                ],
+                redFlags: ["Tán tỉnh quá nhanh", "Bịa lý do cần tiền", "Hứa trả gấp nhiều lần"],
+                advice: "Block ngay. Người tốt thật sự không nhờ người lạ chuyển tiền."
+            },
+            {
+                from: "Nhóm Telegram 'Đầu tư X100'", type: "Telegram",
+                messages: [
+                    { sender: "scammer", text: "🔥 CƠ HỘI VÀNG! Đầu tư chỉ từ 1 triệu, lãi 50%/tuần! Đã có 500 người thành công!" },
+                    { sender: "scammer", text: "Nạp tiền vào link này ngay, chỉ còn 10 suất cuối! ⏰" },
+                ],
+                redFlags: ["Lãi suất phi thực tế (50%/tuần)", "Tạo áp lực thời gian giả", "Không rõ công ty, giấy phép"],
+                advice: "Không đầu tư nào lãi 50%/tuần hợp pháp. Đây là Ponzi — sẽ sập sớm."
+            }
+        ];
+
+        function renderSimulator() {
+            const container = document.getElementById('sim-container');
+            container.innerHTML = SCAM_SIMS.map((sim, i) => `
+        <div class="mb-8 p-5 rounded-2xl bg-gray-50 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-700">
+            <div class="flex items-center gap-2 mb-4">
+                <span class="bg-red-100 text-red-500 px-3 py-1 rounded-full text-xs font-bold">${sim.type}</span>
+                <span class="text-sm font-bold dark:text-white">Từ: ${sim.from}</span>
+            </div>
+            <div class="space-y-2 mb-4">
+                ${sim.messages.map(msg => `
+                    <div class="flex ${msg.sender === 'scammer' ? '' : 'justify-end'}">
+                        <div class="${msg.sender === 'scammer' ? 'bg-white dark:bg-slate-700' : 'bg-ns-purple text-white'} px-4 py-2 rounded-2xl max-w-[80%] text-sm">
+                            ${msg.text}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+            <div class="bg-red-50 dark:bg-red-900/20 rounded-xl p-4 mb-3">
+                <p class="text-xs font-bold text-red-600 dark:text-red-400 mb-2">🚩 Dấu hiệu cảnh báo:</p>
+                <ul class="space-y-1">
+                    ${sim.redFlags.map(f => `<li class="text-xs text-red-500 dark:text-red-400">• ${f}</li>`).join('')}
+                </ul>
+            </div>
+            <div class="bg-green-50 dark:bg-green-900/20 rounded-xl p-3">
+                <p class="text-xs font-bold text-green-600 dark:text-green-400">✅ Cách xử lý: ${sim.advice}</p>
+            </div>
+        </div>
+    `).join('');
+        }
+
+        // ============================================================
+        // AI ANALYZE SCAM
+        // ============================================================
+        if (typeof nsRenderMd === 'undefined') {
+            window.nsRenderMd = function (t) {
+                return t
+                    .replace(/```([\s\S]*?)```/g, '<pre style="background:#1e1b2e;color:#e0def4;padding:12px;border-radius:12px;font-size:12px;overflow-x:auto;margin:8px 0">$1</pre>')
+                    .replace(/`([^`]+)`/g, '<code style="background:#7c5cfc20;color:#7c5cfc;padding:2px 6px;border-radius:6px;font-size:12px">$1</code>')
+                    .replace(/\*\*(.*?)\*\*/g, '<strong style="color:#ef4444;font-weight:900">$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                    .replace(/^### (.+)$/gm, '<h4 class="font-black text-sm mt-3 mb-1">$1</h4>')
+                    .replace(/^## (.+)$/gm, '<h3 class="font-black text-base mt-3 mb-1">$1</h3>')
+                    .replace(/^- (.+)$/gm, '<div style="padding-left:12px">&bull; $1</div>')
+                    .replace(/\n/g, '<br>');
+            };
+        }
+
+        async function analyzeScam() {
+            const input = document.getElementById('scam-input');
+            const text = input.value.trim();
+            if (!text) { alert('Vui lòng dán tin nhắn hoặc mô tả tình huống!'); return; }
+
+            const resultEl = document.getElementById('scam-result');
+            resultEl.classList.remove('hidden');
+            resultEl.innerHTML = '<div class="flex items-center gap-2 text-red-500"><i class="ph-bold ph-circle-notch animate-spin text-xl"></i><span class="font-bold">Đang phân tích...</span></div>';
+
+            const prompt = `Bạn là chuyên gia an ninh mạng Việt Nam. Phân tích nội dung sau và đánh giá:
+
+"${text}"
+
+Hãy trả lời theo format:
+1. **Đánh giá mức độ nguy hiểm:** (Thang 1-10, 1=an toàn, 10=lừa đảo chắc chắn)
+2. **Loại lừa đảo (nếu có):** (Phishing, Vishing, Romance Scam, Việc nhẹ lương cao, v.v.)
+3. **Dấu hiệu cảnh báo:** (Liệt kê cụ thể)
+4. **Cách xử lý:** (Bước cụ thể nên làm)
+5. **Lời khuyên:** (Cho học sinh THPT)
+
+Trả lời bằng tiếng Việt, dùng emoji, markdown.`;
+
+            const apiInfo = nsGetApiKey();
+            if (!apiInfo) {
+                resultEl.innerHTML = `<p class="text-center">⚠️ Chưa có API key. <a href="https://aistudio.google.com/apikey" target="_blank" class="text-ns-purple underline font-bold">Lấy miễn phí tại đây</a></p>`;
+                return;
+            }
+
+            // Reset chat history for this context
+            const savedHistory = nsChatHistory;
+            nsChatHistory = [];
+
+            window._nsChatStreamCallback = (partial) => {
+                resultEl.innerHTML = nsRenderMd(partial) + '<span class="animate-pulse" style="color:#ef4444">▌</span>';
+            };
+
+            const response = await nsChatbotAsk(prompt);
+            window._nsChatStreamCallback = null;
+            resultEl.innerHTML = nsRenderMd(response);
+
+            nsChatHistory = savedHistory;
+        }
+
+        // INIT
+        renderQuiz();
+        renderSimulator();
+    </script>
+
+</body>
+
+</html>

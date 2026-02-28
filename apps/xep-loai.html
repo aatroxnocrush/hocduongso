@@ -1,0 +1,190 @@
+﻿<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Xếp Loại Học Lực — AITECH</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="../aitech.css">
+    <script>tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Quicksand', 'sans-serif'] }, colors: { 'ns-purple': '#7c5cfc', 'ns-purple-light': '#a78bfa', 'ns-purple-soft': '#ede9fe', 'dark-text': '#5A4A4A' } } } }</script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="../firebase-config.js"></script>
+    <script src="../aitech.js"></script>
+</head>
+
+<body class="relative min-h-screen pb-20 font-sans text-dark-text dark:text-gray-100">
+
+    <div class="blob bg-orange-100 w-[400px] h-[400px] rounded-full top-[-100px] right-[-100px] animate-float"></div>
+
+    <button onclick="toggleTheme()"
+        class="fixed bottom-8 right-8 z-[60] bg-white dark:bg-slate-800 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-yellow-500 border-4 border-white dark:border-slate-700 hover:scale-110 transition-all">
+        <i class="ph-fill ph-sun text-2xl dark:hidden"></i><i
+            class="ph-fill ph-moon text-2xl text-blue-300 hidden dark:block"></i>
+    </button>
+
+    <nav class="p-4 sm:p-6 sticky top-0 z-50" id="navbar">
+        <div class="max-w-6xl mx-auto flex justify-between items-center glass-card px-6 py-3 rounded-full">
+            <a href="../apps.html"
+                class="flex items-center gap-2 text-gray-500 hover:text-ns-purple transition-colors font-bold group"><i
+                    class="ph-bold ph-arrow-left group-hover:-translate-x-1 transition-transform"></i> Ứng dụng</a>
+            <div class="font-bold text-lg text-orange-500 flex items-center gap-2"><i
+                    class="ph-fill ph-graduation-cap"></i><span class="hidden sm:inline">Xếp Loại Học Lực</span></div>
+            <div></div>
+        </div>
+    </nav>
+
+    <main class="max-w-4xl mx-auto px-4 mt-8 space-y-6">
+        <header class="text-center mb-6">
+            <h1 class="text-3xl font-extrabold dark:text-white">🎓 Xếp Loại <span class="text-orange-500">Học Lực</span>
+            </h1>
+            <p class="text-gray-500 text-sm mt-2">Nhập điểm theo từng môn → tính TB tự động → xếp loại năm học.</p>
+            <p
+                class="text-[10px] text-orange-500 font-bold mt-1 bg-orange-50 dark:bg-orange-900/20 inline-block px-3 py-1 rounded-full">
+                ⚠️ Có thể cần chỉnh theo quy định địa phương/trường</p>
+        </header>
+
+        <!-- Settings -->
+        <div class="glass-card p-6 rounded-[2rem]">
+            <div class="flex flex-wrap gap-4 items-end">
+                <div>
+                    <label class="text-xs font-bold text-gray-400 block mb-1">Học kỳ</label>
+                    <select id="semester" onchange="calculate()"
+                        class="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm font-bold focus:outline-none focus:border-ns-purple">
+                        <option value="hk1">Học kỳ 1</option>
+                        <option value="hk2">Học kỳ 2</option>
+                        <option value="cn" selected>Cả năm</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-400 block mb-1">Hệ số TB HK1 : HK2</label>
+                    <div class="flex gap-1 items-center">
+                        <input type="number" id="w-hk1" value="1" min="1" max="3"
+                            class="w-14 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-2 py-2 text-sm font-bold text-center focus:outline-none focus:border-ns-purple"
+                            onchange="calculate()">
+                        <span class="font-bold text-gray-400">:</span>
+                        <input type="number" id="w-hk2" value="2" min="1" max="3"
+                            class="w-14 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-2 py-2 text-sm font-bold text-center focus:outline-none focus:border-ns-purple"
+                            onchange="calculate()">
+                    </div>
+                </div>
+                <button onclick="addSubject()"
+                    class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-xl font-bold text-sm transition-all"><i
+                        class="ph-bold ph-plus mr-1"></i>Thêm môn</button>
+                <button onclick="resetAll()"
+                    class="bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-gray-300 px-4 py-2 rounded-xl font-bold text-sm transition-all"><i
+                        class="ph-bold ph-arrow-counter-clockwise mr-1"></i>Reset</button>
+            </div>
+        </div>
+
+        <!-- Subjects Table -->
+        <div class="glass-card rounded-[2rem] overflow-x-auto">
+            <table class="w-full min-w-[500px] text-sm">
+                <thead>
+                    <tr class="bg-orange-50 dark:bg-orange-900/20 text-left">
+                        <th class="p-3 font-bold text-xs uppercase text-gray-500">Môn học</th>
+                        <th class="p-3 font-bold text-xs uppercase text-gray-500 text-center">Hệ số</th>
+                        <th class="p-3 font-bold text-xs uppercase text-gray-500 text-center">Điểm HK1</th>
+                        <th class="p-3 font-bold text-xs uppercase text-gray-500 text-center">Điểm HK2</th>
+                        <th class="p-3 font-bold text-xs uppercase text-gray-500 text-center">TB Môn</th>
+                        <th class="p-3 w-10"></th>
+                    </tr>
+                </thead>
+                <tbody id="subjects-body"></tbody>
+            </table>
+        </div>
+
+        <!-- Result -->
+        <div id="result-box" class="glass-card p-8 rounded-[2.5rem] text-center hidden">
+            <h2 class="text-xl font-bold dark:text-white mb-2">Điểm Trung Bình</h2>
+            <div id="result-score" class="text-5xl font-extrabold text-ns-purple my-4">0.0</div>
+            <div id="result-class"
+                class="inline-block px-6 py-2 rounded-full font-black text-sm uppercase tracking-widest"></div>
+            <p id="result-note" class="text-gray-400 text-xs mt-4"></p>
+        </div>
+    </main>
+
+    <script>
+        const DEFAULT_SUBJECTS = [
+            { name: 'Toán', weight: 2, hk1: '', hk2: '' },
+            { name: 'Ngữ văn', weight: 2, hk1: '', hk2: '' },
+            { name: 'Tiếng Anh', weight: 2, hk1: '', hk2: '' },
+            { name: 'Vật lý', weight: 1, hk1: '', hk2: '' },
+            { name: 'Hóa học', weight: 1, hk1: '', hk2: '' },
+            { name: 'Sinh học', weight: 1, hk1: '', hk2: '' },
+            { name: 'Lịch sử', weight: 1, hk1: '', hk2: '' },
+            { name: 'Địa lý', weight: 1, hk1: '', hk2: '' },
+            { name: 'GDCD', weight: 1, hk1: '', hk2: '' },
+            { name: 'Tin học', weight: 1, hk1: '', hk2: '' },
+            { name: 'Công nghệ', weight: 1, hk1: '', hk2: '' },
+            { name: 'Thể dục', weight: 1, hk1: '', hk2: '' },
+        ];
+
+        let subjects = nsLoad('ns_grades', null) || [...DEFAULT_SUBJECTS.map(s => ({ ...s }))];
+
+        function render() {
+            const tbody = document.getElementById('subjects-body');
+            tbody.innerHTML = subjects.map((s, i) => `
+        <tr class="border-t border-gray-100 dark:border-slate-700">
+          <td class="p-2"><input type="text" value="${s.name}" onchange="subjects[${i}].name=this.value;save()" class="bg-transparent font-bold text-sm w-full focus:outline-none dark:text-white"></td>
+          <td class="p-2 text-center"><select onchange="subjects[${i}].weight=+this.value;calculate();save()" class="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg px-2 py-1 text-xs font-bold focus:outline-none">
+            <option value="1" ${s.weight === 1 ? 'selected' : ''}>1</option>
+            <option value="2" ${s.weight === 2 ? 'selected' : ''}>2</option>
+            <option value="3" ${s.weight === 3 ? 'selected' : ''}>3</option>
+          </select></td>
+          <td class="p-2"><input type="number" value="${s.hk1}" min="0" max="10" step="0.1" placeholder="-" onchange="subjects[${i}].hk1=this.value?+this.value:'';calculate();save()" class="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs font-bold text-center focus:outline-none focus:border-ns-purple"></td>
+          <td class="p-2"><input type="number" value="${s.hk2}" min="0" max="10" step="0.1" placeholder="-" onchange="subjects[${i}].hk2=this.value?+this.value:'';calculate();save()" class="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs font-bold text-center focus:outline-none focus:border-ns-purple"></td>
+          <td class="p-2 text-center font-bold text-sm" id="tb-${i}">—</td>
+          <td class="p-1"><button onclick="subjects.splice(${i},1);save();render();calculate()" class="text-gray-300 hover:text-red-500 transition-colors"><i class="ph-bold ph-x text-xs"></i></button></td>
+        </tr>
+      `).join('');
+            calculate();
+        }
+
+        function calculate() {
+            const sem = document.getElementById('semester').value;
+            const wHK1 = +document.getElementById('w-hk1').value || 1;
+            const wHK2 = +document.getElementById('w-hk2').value || 2;
+            let totalWeighted = 0, totalWeight = 0;
+
+            subjects.forEach((s, i) => {
+                let tb = null;
+                if (sem === 'hk1' && s.hk1 !== '') tb = s.hk1;
+                else if (sem === 'hk2' && s.hk2 !== '') tb = s.hk2;
+                else if (sem === 'cn' && s.hk1 !== '' && s.hk2 !== '') tb = (s.hk1 * wHK1 + s.hk2 * wHK2) / (wHK1 + wHK2);
+
+                const el = document.getElementById('tb-' + i);
+                if (el) {
+                    if (tb !== null) { el.textContent = tb.toFixed(1); totalWeighted += tb * s.weight; totalWeight += s.weight }
+                    else el.textContent = '—';
+                }
+            });
+
+            const box = document.getElementById('result-box');
+            if (totalWeight === 0) { box.classList.add('hidden'); return }
+            box.classList.remove('hidden');
+            const avg = (totalWeighted / totalWeight);
+            document.getElementById('result-score').textContent = avg.toFixed(2);
+
+            const classEl = document.getElementById('result-class');
+            const noteEl = document.getElementById('result-note');
+            if (avg >= 8.0) { classEl.textContent = '🌟 Giỏi'; classEl.className = 'inline-block px-6 py-2 rounded-full font-black text-sm uppercase tracking-widest bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'; noteEl.textContent = 'Xuất sắc! Tiếp tục phát huy nhé.' }
+            else if (avg >= 6.5) { classEl.textContent = '👍 Khá'; classEl.className = 'inline-block px-6 py-2 rounded-full font-black text-sm uppercase tracking-widest bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'; noteEl.textContent = 'Tốt lắm! Cố gắng thêm để đạt Giỏi.' }
+            else if (avg >= 5.0) { classEl.textContent = '📚 Trung bình'; classEl.className = 'inline-block px-6 py-2 rounded-full font-black text-sm uppercase tracking-widest bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'; noteEl.textContent = 'Cần nỗ lực hơn. Thử áp dụng phương pháp Active Recall!' }
+            else if (avg >= 3.5) { classEl.textContent = '⚡ Yếu'; classEl.className = 'inline-block px-6 py-2 rounded-full font-black text-sm uppercase tracking-widest bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300'; noteEl.textContent = 'Cần được hỗ trợ. Hãy tìm đến thầy cô hoặc bạn bè giúp đỡ.' }
+            else { classEl.textContent = '💪 Kém'; classEl.className = 'inline-block px-6 py-2 rounded-full font-black text-sm uppercase tracking-widest bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'; noteEl.textContent = 'Đừng nản! Bắt đầu từ những mục tiêu nhỏ, từng bước cải thiện.' }
+        }
+
+        function addSubject() { subjects.push({ name: 'Môn mới', weight: 1, hk1: '', hk2: '' }); save(); render() }
+        function resetAll() { if (!confirm('Xóa tất cả điểm?')) return; subjects = [...DEFAULT_SUBJECTS.map(s => ({ ...s }))]; save(); render() }
+        function save() { nsStore('ns_grades', subjects) }
+        render();
+    </script>
+</body>
+
+</html>

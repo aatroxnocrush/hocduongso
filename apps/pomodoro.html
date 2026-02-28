@@ -1,0 +1,218 @@
+﻿<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Pomodoro Timer — AITECH</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <link rel="stylesheet" href="../aitech.css">
+    <script>tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Quicksand', 'sans-serif'] }, colors: { 'ns-purple': '#7c5cfc', 'ns-purple-light': '#a78bfa', 'ns-purple-soft': '#ede9fe', 'dark-text': '#5A4A4A' } } } }</script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="../firebase-config.js"></script>
+    <script src="../aitech.js"></script>
+</head>
+
+<body class="relative min-h-screen pb-20 font-sans text-dark-text dark:text-gray-100">
+
+    <div class="blob bg-red-100 w-[400px] h-[400px] rounded-full top-[-100px] left-[-100px] animate-float"></div>
+
+    <button onclick="toggleTheme()"
+        class="fixed bottom-8 right-8 z-[60] bg-white dark:bg-slate-800 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-yellow-500 border-4 border-white dark:border-slate-700 hover:scale-110 transition-all">
+        <i class="ph-fill ph-sun text-2xl dark:hidden"></i><i
+            class="ph-fill ph-moon text-2xl text-blue-300 hidden dark:block"></i>
+    </button>
+
+    <nav class="p-4 sm:p-6 sticky top-0 z-50" id="navbar">
+        <div class="max-w-6xl mx-auto flex justify-between items-center glass-card px-6 py-3 rounded-full">
+            <a href="../apps.html"
+                class="flex items-center gap-2 text-gray-500 hover:text-ns-purple transition-colors font-bold group"><i
+                    class="ph-bold ph-arrow-left group-hover:-translate-x-1 transition-transform"></i> Ứng dụng</a>
+            <div class="font-bold text-lg text-red-500 flex items-center gap-2"><i class="ph-fill ph-timer"></i><span
+                    class="hidden sm:inline">Pomodoro</span></div>
+            <div></div>
+        </div>
+    </nav>
+
+    <main class="max-w-xl mx-auto px-4 mt-8 space-y-6">
+        <header class="text-center mb-6">
+            <h1 class="text-3xl font-extrabold dark:text-white">🍅 <span class="text-red-500">Pomodoro</span> Timer</h1>
+            <p class="text-gray-500 text-sm mt-2">25 phút tập trung → 5 phút nghỉ → Lặp lại.</p>
+        </header>
+
+        <!-- Timer Display -->
+        <div class="glass-card p-10 rounded-[3rem] text-center">
+            <div id="mode-label" class="text-xs font-black uppercase tracking-widest text-red-500 mb-4">🍅 Tập trung
+            </div>
+            <div id="timer-display" class="text-7xl sm:text-8xl font-extrabold dark:text-white mb-8 tabular-nums">25:00
+            </div>
+
+            <!-- Progress Ring -->
+            <div class="relative w-4 h-4 mx-auto mb-6">
+                <div id="progress-ring"
+                    class="absolute -top-2 left-1/2 -translate-x-1/2 w-full bg-gray-200 dark:bg-slate-700 rounded-full h-1.5 max-w-xs"
+                    style="width:300px">
+                    <div id="progress-fill" class="h-1.5 rounded-full bg-red-500 transition-all" style="width:100%">
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-center gap-4 mt-6">
+                <button onclick="toggleTimer()" id="btn-toggle"
+                    class="bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-xl font-bold text-lg transition-all shadow-xl"><i
+                        class="ph-bold ph-play mr-2"></i>Bắt đầu</button>
+                <button onclick="resetTimer()"
+                    class="bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-gray-300 px-6 py-3 rounded-xl font-bold text-lg transition-all"><i
+                        class="ph-bold ph-arrow-counter-clockwise"></i></button>
+            </div>
+
+            <!-- Session Counter -->
+            <div class="mt-8 flex justify-center gap-2">
+                <span class="text-xs font-bold text-gray-400">Phiên hôm nay:</span>
+                <span id="session-count" class="text-xs font-black text-red-500">0</span>
+            </div>
+        </div>
+
+        <!-- Settings -->
+        <div class="glass-card p-6 rounded-[2rem]">
+            <h3 class="font-bold text-sm dark:text-white mb-3"><i class="ph-bold ph-gear mr-1"></i>Cài đặt</h3>
+            <div class="grid grid-cols-3 gap-3">
+                <div>
+                    <label class="text-[10px] font-bold text-gray-400 block mb-1">Tập trung (phút)</label>
+                    <input type="number" id="set-focus" value="25" min="1" max="90" onchange="updateSettings()"
+                        class="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm font-bold text-center focus:outline-none focus:border-ns-purple">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-gray-400 block mb-1">Nghỉ ngắn (phút)</label>
+                    <input type="number" id="set-short" value="5" min="1" max="30" onchange="updateSettings()"
+                        class="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm font-bold text-center focus:outline-none focus:border-ns-purple">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-gray-400 block mb-1">Nghỉ dài (phút)</label>
+                    <input type="number" id="set-long" value="15" min="5" max="60" onchange="updateSettings()"
+                        class="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm font-bold text-center focus:outline-none focus:border-ns-purple">
+                </div>
+            </div>
+        </div>
+
+        <!-- Weekly Stats -->
+        <div class="glass-card p-6 rounded-[2rem]">
+            <h3 class="font-bold text-sm dark:text-white mb-3"><i class="ph-bold ph-chart-bar mr-1"></i>Thống kê 7 ngày
+            </h3>
+            <canvas id="stats-chart" height="150"></canvas>
+        </div>
+    </main>
+
+    <script>
+        let focusMin = 25, shortBreak = 5, longBreak = 15;
+        let timeLeft = focusMin * 60, isRunning = false, interval = null;
+        let mode = 'focus'; // focus | short | long
+        let sessionsDone = 0;
+        let stats = nsLoad('ns_pomodoro_stats', {});
+        const today = new Date().toISOString().slice(0, 10);
+        if (!stats[today]) stats[today] = 0;
+        sessionsDone = stats[today];
+
+        function updateDisplay() {
+            const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+            const s = (timeLeft % 60).toString().padStart(2, '0');
+            document.getElementById('timer-display').textContent = `${m}:${s}`;
+            document.title = `${m}:${s} — Pomodoro | AITECH`;
+            // Progress
+            const total = mode === 'focus' ? focusMin * 60 : mode === 'short' ? shortBreak * 60 : longBreak * 60;
+            document.getElementById('progress-fill').style.width = ((timeLeft / total) * 100) + '%';
+        }
+
+        function toggleTimer() {
+            if (isRunning) {
+                clearInterval(interval); isRunning = false;
+                document.getElementById('btn-toggle').innerHTML = '<i class="ph-bold ph-play mr-2"></i>Tiếp tục';
+            } else {
+                isRunning = true;
+                document.getElementById('btn-toggle').innerHTML = '<i class="ph-bold ph-pause mr-2"></i>Tạm dừng';
+                interval = setInterval(() => {
+                    timeLeft--;
+                    if (timeLeft <= 0) {
+                        clearInterval(interval); isRunning = false;
+                        onTimerEnd();
+                    }
+                    updateDisplay();
+                }, 1000);
+            }
+        }
+
+        function onTimerEnd() {
+            // Notification
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification('🍅 AITECH Pomodoro', { body: mode === 'focus' ? 'Nghỉ thôi! ☕' : 'Quay lại học nào! 📚' });
+            }
+
+            if (mode === 'focus') {
+                sessionsDone++;
+                stats[today] = sessionsDone;
+                nsStore('ns_pomodoro_stats', stats);
+                document.getElementById('session-count').textContent = sessionsDone;
+                renderStats();
+
+                if (sessionsDone % 4 === 0) {
+                    mode = 'long'; timeLeft = longBreak * 60;
+                    document.getElementById('mode-label').textContent = '☕ Nghỉ dài';
+                    document.getElementById('mode-label').className = 'text-xs font-black uppercase tracking-widest text-green-500 mb-4';
+                } else {
+                    mode = 'short'; timeLeft = shortBreak * 60;
+                    document.getElementById('mode-label').textContent = '☕ Nghỉ ngắn';
+                    document.getElementById('mode-label').className = 'text-xs font-black uppercase tracking-widest text-blue-500 mb-4';
+                }
+            } else {
+                mode = 'focus'; timeLeft = focusMin * 60;
+                document.getElementById('mode-label').textContent = '🍅 Tập trung';
+                document.getElementById('mode-label').className = 'text-xs font-black uppercase tracking-widest text-red-500 mb-4';
+            }
+            document.getElementById('btn-toggle').innerHTML = '<i class="ph-bold ph-play mr-2"></i>Bắt đầu';
+            updateDisplay();
+        }
+
+        function resetTimer() {
+            clearInterval(interval); isRunning = false;
+            mode = 'focus'; timeLeft = focusMin * 60;
+            document.getElementById('mode-label').textContent = '🍅 Tập trung';
+            document.getElementById('mode-label').className = 'text-xs font-black uppercase tracking-widest text-red-500 mb-4';
+            document.getElementById('btn-toggle').innerHTML = '<i class="ph-bold ph-play mr-2"></i>Bắt đầu';
+            updateDisplay();
+        }
+
+        function updateSettings() {
+            focusMin = +document.getElementById('set-focus').value || 25;
+            shortBreak = +document.getElementById('set-short').value || 5;
+            longBreak = +document.getElementById('set-long').value || 15;
+            if (!isRunning && mode === 'focus') { timeLeft = focusMin * 60; updateDisplay() }
+        }
+
+        function renderStats() {
+            const days = []; for (let i = 6; i >= 0; i--) { const d = new Date(Date.now() - i * 86400000); days.push(d.toISOString().slice(0, 10)) }
+            const data = days.map(d => stats[d] || 0);
+            const labels = days.map(d => { const dt = new Date(d + 'T00:00'); return ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'][dt.getDay()] });
+            const ctx = document.getElementById('stats-chart');
+            if (window._statsChart) window._statsChart.destroy();
+            window._statsChart = new Chart(ctx, {
+                type: 'bar', data: { labels, datasets: [{ label: 'Phiên', data, backgroundColor: '#ef4444', borderRadius: 8, barThickness: 20 }] },
+                options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1, font: { family: 'Quicksand' } } }, x: { ticks: { font: { family: 'Quicksand', weight: 'bold' } } } } }
+            });
+        }
+
+        // Request notification permission
+        if ('Notification' in window && Notification.permission === 'default') { Notification.requestPermission() }
+
+        document.getElementById('session-count').textContent = sessionsDone;
+        updateDisplay();
+        renderStats();
+    </script>
+</body>
+
+</html>

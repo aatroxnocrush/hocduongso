@@ -1,0 +1,424 @@
+﻿<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>AI Tư Vấn Nghề Nghiệp — AITECH</title>
+    <meta name="description" content="Trắc nghiệm Holland RIASEC + AI tư vấn nghề nghiệp cho học sinh THPT.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="../aitech.css">
+    <script>tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Quicksand', 'sans-serif'] }, colors: { 'ns-purple': '#7c5cfc', 'ns-purple-light': '#a78bfa', 'ns-purple-soft': '#ede9fe', 'dark-text': '#5A4A4A' } } } }</script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="../firebase-config.js"></script>
+    <script src="../aitech.js"></script>
+</head>
+
+<body class="relative min-h-screen font-sans text-dark-text dark:text-gray-100 pb-20">
+
+    <div class="blob bg-purple-100 w-[500px] h-[500px] rounded-full top-[-100px] left-[-150px] animate-float"></div>
+    <div class="blob bg-blue-100 w-[400px] h-[400px] rounded-full bottom-20 right-[-100px]"></div>
+
+    <button onclick="toggleTheme()"
+        class="fixed bottom-8 right-8 z-[60] bg-white dark:bg-slate-800 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-yellow-500 border-4 border-white dark:border-slate-700 hover:scale-110 transition-all">
+        <i class="ph-fill ph-sun text-2xl dark:hidden"></i><i
+            class="ph-fill ph-moon text-2xl text-blue-300 hidden dark:block"></i>
+    </button>
+
+    <nav class="p-4 sm:p-6 sticky top-0 z-50" id="navbar">
+        <div class="max-w-6xl mx-auto flex justify-between items-center glass-card px-6 py-3 rounded-full">
+            <a href="../apps.html"
+                class="flex items-center gap-2 text-gray-500 hover:text-ns-purple transition-colors font-bold group"><i
+                    class="ph-bold ph-arrow-left group-hover:-translate-x-1 transition-transform"></i> Ứng dụng</a>
+            <div class="font-bold text-lg text-ns-purple flex items-center gap-2"><i
+                    class="ph-fill ph-briefcase"></i><span class="hidden sm:inline">Tư Vấn Nghề Nghiệp</span></div>
+            <a href="../index.html"
+                class="text-sm font-bold text-gray-500 hover:text-ns-purple transition-colors hidden md:block">Trang chủ
+                <i class="ph-bold ph-arrow-right"></i></a>
+        </div>
+    </nav>
+
+    <header class="text-center px-4 mb-12 mt-8 reveal">
+        <span
+            class="inline-block bg-white dark:bg-slate-800 text-ns-purple text-[10px] font-black px-4 py-1.5 rounded-full shadow-sm mb-4 uppercase tracking-widest border border-ns-purple/10">AI-Powered</span>
+        <h1 class="text-3xl md:text-5xl font-extrabold dark:text-white mb-4 leading-tight">Tư Vấn <span
+                class="text-ns-purple italic">Nghề Nghiệp</span> 🎯</h1>
+        <p class="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">Làm bài trắc nghiệm Holland → Khám phá tính cách →
+            Nhận tư vấn chi tiết từ AI.</p>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4">
+
+        <!-- STEP INDICATOR -->
+        <div class="flex items-center justify-center gap-4 mb-10" id="step-indicator">
+            <div class="step-dot active flex items-center gap-2 bg-ns-purple text-white px-4 py-2 rounded-full text-xs font-bold transition-all"
+                data-step="1">
+                <i class="ph-fill ph-clipboard-text"></i> Trắc nghiệm
+            </div>
+            <div class="w-8 h-0.5 bg-gray-200 dark:bg-gray-700"></div>
+            <div class="step-dot flex items-center gap-2 bg-gray-100 dark:bg-slate-800 text-gray-400 px-4 py-2 rounded-full text-xs font-bold transition-all"
+                data-step="2">
+                <i class="ph-fill ph-chart-pie"></i> Kết quả
+            </div>
+            <div class="w-8 h-0.5 bg-gray-200 dark:bg-gray-700"></div>
+            <div class="step-dot flex items-center gap-2 bg-gray-100 dark:bg-slate-800 text-gray-400 px-4 py-2 rounded-full text-xs font-bold transition-all"
+                data-step="3">
+                <i class="ph-fill ph-sparkle"></i> AI Tư vấn
+            </div>
+        </div>
+
+        <!-- STEP 1: QUIZ -->
+        <section id="quiz-section" class="glass-card rounded-[2rem] p-6 sm:p-10 mb-10">
+            <h2 class="text-xl font-bold dark:text-white mb-2">📋 Trắc Nghiệm Holland (RIASEC)</h2>
+            <p class="text-sm text-gray-500 mb-6">Chọn câu mô tả đúng nhất về bạn. Mỗi câu chỉ chọn 1 đáp án.</p>
+            <div id="quiz-container"></div>
+            <div class="text-center mt-8">
+                <button onclick="submitQuiz()" id="submit-quiz-btn"
+                    class="hero-gradient text-white px-10 py-3 rounded-xl font-bold shadow-xl hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled>
+                    Xem kết quả <i class="ph-bold ph-arrow-right ml-1"></i>
+                </button>
+                <p class="text-xs text-gray-400 mt-3" id="quiz-progress">0/18 câu đã trả lời</p>
+            </div>
+        </section>
+
+        <!-- STEP 2: RESULTS -->
+        <section id="result-section" class="hidden">
+            <div class="glass-card rounded-[2rem] p-6 sm:p-10 mb-8">
+                <h2 class="text-xl font-bold dark:text-white mb-6">📊 Kết Quả Tính Cách Holland</h2>
+                <div id="result-chart" class="mb-6"></div>
+                <div id="result-summary" class="bg-ns-purple-soft dark:bg-purple-900/20 rounded-2xl p-6 mb-6"></div>
+                <div class="text-center">
+                    <button onclick="goToAIAdvice()"
+                        class="hero-gradient text-white px-10 py-3 rounded-xl font-bold shadow-xl hover:scale-105 transition-all">
+                        ✨ Nhận tư vấn AI chi tiết <i class="ph-bold ph-arrow-right ml-1"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Career Cards -->
+            <h2 class="text-xl font-bold dark:text-white mb-6 text-center">💼 Ngành Nghề Gợi Ý</h2>
+            <div id="career-cards" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10"></div>
+        </section>
+
+        <!-- STEP 3: AI ADVICE -->
+        <section id="ai-section" class="hidden">
+            <div class="glass-card rounded-[2rem] p-6 sm:p-10 mb-8">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-12 h-12 bg-ns-purple/10 rounded-xl flex items-center justify-center">
+                        <i class="ph-fill ph-sparkle text-2xl text-ns-purple"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold dark:text-white">AITECH Career AI</h2>
+                        <p class="text-xs text-gray-500">Tư vấn nghề nghiệp cá nhân hóa</p>
+                    </div>
+                </div>
+                <div id="ai-career-response"
+                    class="bg-white dark:bg-slate-900 rounded-2xl p-6 min-h-[200px] text-sm leading-relaxed border border-ns-purple/10">
+                    <div class="flex items-center gap-2 text-ns-purple">
+                        <i class="ph-bold ph-circle-notch animate-spin text-xl"></i>
+                        <span class="font-bold">Đang phân tích tính cách và tư vấn...</span>
+                    </div>
+                </div>
+                <div class="mt-6">
+                    <textarea id="ai-followup"
+                        placeholder="Hỏi thêm về nghề nghiệp, trường đại học, lộ trình... (vd: Ngành CNTT học trường nào tốt?)"
+                        class="w-full bg-white dark:bg-slate-800 border-2 border-ns-purple/20 rounded-2xl p-4 pr-24 text-sm focus:outline-none focus:border-ns-purple transition-all h-20 dark:text-white font-semibold resize-none"></textarea>
+                    <div class="flex justify-between items-center mt-3">
+                        <button onclick="resetQuiz()"
+                            class="text-xs text-gray-400 hover:text-ns-purple font-bold transition-colors">
+                            <i class="ph-bold ph-arrow-counter-clockwise"></i> Làm lại trắc nghiệm
+                        </button>
+                        <button onclick="askCareerAI()"
+                            class="bg-ns-purple text-white px-6 py-2 rounded-xl font-bold hover:bg-ns-purple-light transition-all text-sm">
+                            <i class="ph-bold ph-paper-plane-right"></i> Gửi câu hỏi
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="text-center mt-16 text-gray-400 dark:text-gray-600 text-sm pb-10">
+        <div class="flex justify-center items-center gap-2 mb-4"><i
+                class="ph-fill ph-sparkle text-2xl text-ns-purple"></i><span
+                class="font-bold text-slate-800 dark:text-white uppercase tracking-wider">AITECH</span></div>
+        <p>Dành cho học sinh THPT Việt Nam — 2026</p>
+    </footer>
+
+    <script>
+        // ============================================================
+        // HOLLAND RIASEC QUIZ
+        // ============================================================
+
+        const HOLLAND_QUESTIONS = [
+            // R - Realistic (Thực tế)
+            { q: "Bạn thích làm việc với máy móc, công cụ, hoặc lắp ráp đồ vật?", type: "R" },
+            { q: "Bạn thích hoạt động ngoài trời, làm vườn, hoặc thể thao?", type: "R" },
+            { q: "Bạn thích sửa chữa đồ điện tử hoặc xe cộ?", type: "R" },
+            // I - Investigative (Nghiên cứu)
+            { q: "Bạn thích giải toán, phân tích dữ liệu, hoặc nghiên cứu khoa học?", type: "I" },
+            { q: "Bạn tò mò về cách mọi thứ hoạt động và thích tìm hiểu sâu?", type: "I" },
+            { q: "Bạn thích đọc sách khoa học, xem phim tài liệu?", type: "I" },
+            // A - Artistic (Nghệ thuật)
+            { q: "Bạn thích vẽ, thiết kế, chụp ảnh, hoặc sáng tạo nội dung?", type: "A" },
+            { q: "Bạn thích viết văn, làm thơ, hoặc kể chuyện?", type: "A" },
+            { q: "Bạn thích âm nhạc, diễn xuất, hoặc nghệ thuật biểu diễn?", type: "A" },
+            // S - Social (Xã hội)
+            { q: "Bạn thích giúp đỡ người khác, dạy học, hoặc tư vấn?", type: "S" },
+            { q: "Bạn giao tiếp tốt và thích làm việc nhóm?", type: "S" },
+            { q: "Bạn quan tâm đến các vấn đề xã hội và cộng đồng?", type: "S" },
+            // E - Enterprising (Quản lý)
+            { q: "Bạn thích lãnh đạo, thuyết phục, và đưa ra quyết định?", type: "E" },
+            { q: "Bạn muốn khởi nghiệp hoặc quản lý một dự án?", type: "E" },
+            { q: "Bạn thích cạnh tranh và đặt mục tiêu lớn?", type: "E" },
+            // C - Conventional (Quy tắc)
+            { q: "Bạn thích làm việc có trật tự, theo quy trình rõ ràng?", type: "C" },
+            { q: "Bạn giỏi tổ chức, sắp xếp, và quản lý thông tin?", type: "C" },
+            { q: "Bạn thích làm việc với số liệu, bảng tính, hoặc kế toán?", type: "C" },
+        ];
+
+        const HOLLAND_TYPES = {
+            R: { name: "Thực Tế (Realistic)", icon: "🔧", color: "#ef4444", desc: "Thích làm việc với đồ vật, máy móc, thiên nhiên. Thực hành, cụ thể.", careers: ["Kỹ sư cơ khí", "Kiến trúc sư", "Thú y", "Nông nghiệp công nghệ cao", "Kỹ thuật xây dựng", "Phi công"] },
+            I: { name: "Nghiên Cứu (Investigative)", icon: "🔬", color: "#3b82f6", desc: "Thích phân tích, tìm hiểu, khám phá. Tư duy logic mạnh.", careers: ["Bác sĩ", "Nhà khoa học", "Lập trình viên", "Kỹ sư dữ liệu", "Nghiên cứu sinh", "Dược sĩ"] },
+            A: { name: "Nghệ Thuật (Artistic)", icon: "🎨", color: "#a855f7", desc: "Sáng tạo, tự do, giàu trí tưởng tượng. Thích thể hiện bản thân.", careers: ["Nhà thiết kế", "Đạo diễn", "Nhiếp ảnh gia", "Nhà văn", "UX/UI Designer", "Composer"] },
+            S: { name: "Xã Hội (Social)", icon: "🤝", color: "#22c55e", desc: "Thích giúp đỡ, giao tiếp, dạy dỗ. Quan tâm đến con người.", careers: ["Giáo viên", "Bác sĩ tâm lý", "Nhân viên xã hội", "Quản lý nhân sự", "Luật sư", "Y tá"] },
+            E: { name: "Quản Lý (Enterprising)", icon: "💼", color: "#f59e0b", desc: "Thích lãnh đạo, quyết đoán, tham vọng. Muốn tạo ảnh hưởng.", careers: ["CEO / Founder", "Quản lý kinh doanh", "Marketing Manager", "Nhà đầu tư", "Chính trị gia", "Sales Director"] },
+            C: { name: "Quy Tắc (Conventional)", icon: "📊", color: "#06b6d4", desc: "Cẩn thận, tổ chức, có hệ thống. Thích làm việc theo quy trình.", careers: ["Kế toán", "Ngân hàng", "Kiểm toán", "Thư ký", "Quản trị hệ thống", "Logistics"] }
+        };
+
+        let answers = {};
+
+        function renderQuiz() {
+            const container = document.getElementById('quiz-container');
+            container.innerHTML = HOLLAND_QUESTIONS.map((q, i) => `
+        <div class="mb-6 p-4 rounded-2xl bg-white/50 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-700">
+            <p class="font-bold text-sm mb-3 dark:text-white"><span class="text-ns-purple">${i + 1}.</span> ${q.q}</p>
+            <div class="flex flex-wrap gap-2">
+                ${[
+                    { val: 5, label: "Rất đúng", emoji: "😍" },
+                    { val: 4, label: "Khá đúng", emoji: "😊" },
+                    { val: 3, label: "Bình thường", emoji: "😐" },
+                    { val: 2, label: "Không đúng", emoji: "😕" },
+                    { val: 1, label: "Hoàn toàn không", emoji: "😑" }
+                ].map(opt => `
+                    <button onclick="selectAnswer(${i}, ${opt.val})" 
+                        class="answer-btn-${i} px-3 py-1.5 rounded-full text-xs font-bold border-2 transition-all
+                        ${answers[i] === opt.val ? 'bg-ns-purple text-white border-ns-purple' : 'bg-white dark:bg-slate-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-slate-600 hover:border-ns-purple/50'}">
+                        ${opt.emoji} ${opt.label}
+                    </button>
+                `).join('')}
+            </div>
+        </div>
+    `).join('');
+        }
+
+        function selectAnswer(qIndex, val) {
+            answers[qIndex] = val;
+            renderQuiz();
+            updateProgress();
+        }
+
+        function updateProgress() {
+            const count = Object.keys(answers).length;
+            const total = HOLLAND_QUESTIONS.length;
+            document.getElementById('quiz-progress').textContent = `${count}/${total} câu đã trả lời`;
+            document.getElementById('submit-quiz-btn').disabled = count < total;
+        }
+
+        function calculateResults() {
+            const scores = { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 };
+            HOLLAND_QUESTIONS.forEach((q, i) => {
+                if (answers[i]) scores[q.type] += answers[i];
+            });
+            return scores;
+        }
+
+        function submitQuiz() {
+            const scores = calculateResults();
+            nsStore('ns_career_scores', scores);
+            showResults(scores);
+        }
+
+        function showResults(scores) {
+            document.getElementById('quiz-section').classList.add('hidden');
+            document.getElementById('result-section').classList.remove('hidden');
+            setStep(2);
+
+            // Sort by score
+            const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+            const maxScore = 15; // 3 questions * 5 max
+
+            // Chart
+            const chartHTML = sorted.map(([type, score]) => {
+                const info = HOLLAND_TYPES[type];
+                const pct = Math.round((score / maxScore) * 100);
+                return `
+            <div class="flex items-center gap-3 mb-3">
+                <span class="text-xl w-8">${info.icon}</span>
+                <span class="font-bold text-xs w-24 dark:text-white">${info.name.split('(')[0]}</span>
+                <div class="flex-1 h-6 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                    <div class="h-full rounded-full transition-all duration-1000" style="width:${pct}%;background:${info.color}"></div>
+                </div>
+                <span class="font-bold text-sm w-12 text-right" style="color:${info.color}">${score}/15</span>
+            </div>
+        `;
+            }).join('');
+            document.getElementById('result-chart').innerHTML = chartHTML;
+
+            // Summary
+            const top3 = sorted.slice(0, 3);
+            const topType = HOLLAND_TYPES[top3[0][0]];
+            document.getElementById('result-summary').innerHTML = `
+        <h3 class="font-bold text-lg dark:text-white mb-2">${topType.icon} Nhóm tính cách nổi bật: ${topType.name}</h3>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">${topType.desc}</p>
+        <p class="text-xs text-gray-500">Mã Holland của bạn: <strong class="text-ns-purple text-base">${top3.map(t => t[0]).join('')}</strong></p>
+    `;
+
+            // Career Cards
+            const cardsHTML = top3.map(([type]) => {
+                const info = HOLLAND_TYPES[type];
+                return info.careers.map(career => `
+            <div class="glass-card p-5 rounded-2xl border-l-4 hover:-translate-y-1 transition-all" style="border-color:${info.color}">
+                <div class="flex items-center gap-3 mb-2">
+                    <span class="text-2xl">${info.icon}</span>
+                    <h3 class="font-bold dark:text-white">${career}</h3>
+                </div>
+                <p class="text-xs text-gray-500">Phù hợp nhóm ${info.name}</p>
+            </div>
+        `).join('');
+            }).join('');
+            document.getElementById('career-cards').innerHTML = cardsHTML;
+        }
+
+        function setStep(step) {
+            document.querySelectorAll('.step-dot').forEach(dot => {
+                const s = parseInt(dot.dataset.step);
+                if (s === step) {
+                    dot.className = 'step-dot active flex items-center gap-2 bg-ns-purple text-white px-4 py-2 rounded-full text-xs font-bold transition-all';
+                } else if (s < step) {
+                    dot.className = 'step-dot flex items-center gap-2 bg-green-100 dark:bg-green-900/30 text-green-600 px-4 py-2 rounded-full text-xs font-bold transition-all';
+                } else {
+                    dot.className = 'step-dot flex items-center gap-2 bg-gray-100 dark:bg-slate-800 text-gray-400 px-4 py-2 rounded-full text-xs font-bold transition-all';
+                }
+            });
+        }
+
+        // ============================================================
+        // AI CAREER ADVICE
+        // ============================================================
+
+        async function goToAIAdvice() {
+            document.getElementById('ai-section').classList.remove('hidden');
+            setStep(3);
+            window.scrollTo({ top: document.getElementById('ai-section').offsetTop - 100, behavior: 'smooth' });
+
+            const scores = nsLoad('ns_career_scores', calculateResults());
+            const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+            const top3 = sorted.slice(0, 3).map(([t, s]) => `${HOLLAND_TYPES[t].name}: ${s}/15`).join(', ');
+            const hollandCode = sorted.slice(0, 3).map(t => t[0]).join('');
+
+            const prompt = `Mình là học sinh THPT Việt Nam vừa làm bài trắc nghiệm Holland RIASEC.
+Kết quả: ${top3}
+Mã Holland: ${hollandCode}
+
+Hãy tư vấn cho mình:
+1. Phân tích tính cách dựa trên kết quả Holland
+2. Top 5 ngành học phù hợp nhất, mỗi ngành giải thích tại sao phù hợp
+3. Các trường đại học ở Việt Nam nổi bật cho từng ngành
+4. Lộ trình phát triển nghề nghiệp (ngắn hạn + dài hạn)
+5. Kỹ năng cần rèn luyện từ bây giờ
+
+Trả lời chi tiết, dùng emoji, markdown formatting.`;
+
+            const responseEl = document.getElementById('ai-career-response');
+
+            const apiInfo = nsGetApiKey();
+            if (!apiInfo) {
+                responseEl.innerHTML = `<div class="text-center py-8">
+            <p class="text-lg mb-4">⚠️ <strong>Chưa có API key!</strong></p>
+            <p class="text-sm text-gray-500 mb-4">Để nhận tư vấn AI, bạn cần API key Gemini miễn phí.</p>
+            <a href="https://aistudio.google.com/apikey" target="_blank" class="bg-ns-purple text-white px-6 py-2 rounded-xl font-bold text-sm">Lấy API key miễn phí →</a>
+        </div>`;
+                return;
+            }
+
+            // Stream response
+            window._nsChatStreamCallback = (partial) => {
+                responseEl.innerHTML = '<div style="background:#f3f0ff;color:#1e1b2e;padding:12px 16px;border-radius:16px">' + nsRenderMd(partial) + '<span class="animate-pulse" style="color:#7c5cfc">▌</span></div>';
+                responseEl.scrollTop = responseEl.scrollHeight;
+            };
+
+            // Simple markdown render (inline since nsRenderMd is in index.html scope)
+            if (typeof nsRenderMd === 'undefined') {
+                window.nsRenderMd = function (t) {
+                    return t
+                        .replace(/```([\s\S]*?)```/g, '<pre style="background:#1e1b2e;color:#e0def4;padding:12px;border-radius:12px;font-size:12px;overflow-x:auto;margin:8px 0">$1</pre>')
+                        .replace(/`([^`]+)`/g, '<code style="background:#7c5cfc20;color:#7c5cfc;padding:2px 6px;border-radius:6px;font-size:12px">$1</code>')
+                        .replace(/\*\*(.*?)\*\*/g, '<strong class="text-ns-purple font-black">$1</strong>')
+                        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                        .replace(/^### (.+)$/gm, '<h4 class="font-black text-sm mt-3 mb-1">$1</h4>')
+                        .replace(/^## (.+)$/gm, '<h3 class="font-black text-base mt-3 mb-1">$1</h3>')
+                        .replace(/^- (.+)$/gm, '<div style="padding-left:12px">&bull; $1</div>')
+                        .replace(/\n/g, '<br>');
+                };
+            }
+
+            const text = await nsChatbotAsk(prompt);
+            window._nsChatStreamCallback = null;
+            responseEl.innerHTML = '<div style="background:#f3f0ff;color:#1e1b2e;padding:12px 16px;border-radius:16px">' + nsRenderMd(text) + '</div>';
+        }
+
+        async function askCareerAI() {
+            const input = document.getElementById('ai-followup');
+            const q = input.value.trim();
+            if (!q) return;
+            input.value = '';
+            const responseEl = document.getElementById('ai-career-response');
+            const qBubble = `<div style="text-align:right;margin-bottom:12px"><span style="background:#7c5cfc;color:white;padding:6px 14px;border-radius:16px 16px 4px 16px;font-size:13px;display:inline-block;max-width:80%">${q.replace(/</g, '&lt;')}</span></div>`;
+            responseEl.innerHTML += qBubble + '<div><i class="ph-bold ph-circle-notch animate-spin text-ns-purple"></i> Đang suy nghĩ...</div>';
+            responseEl.scrollTop = responseEl.scrollHeight;
+
+            window._nsChatStreamCallback = (partial) => {
+                const existing = responseEl.querySelectorAll('[style*="text-align:right"]');
+                let bubbles = '';
+                existing.forEach(b => bubbles += b.outerHTML);
+                responseEl.innerHTML = bubbles + '<div style="background:#f3f0ff;color:#1e1b2e;padding:12px 16px;border-radius:4px 16px 16px 16px">' + nsRenderMd(partial) + '<span class="animate-pulse" style="color:#7c5cfc">▌</span></div>';
+                responseEl.scrollTop = responseEl.scrollHeight;
+            };
+
+            const text = await nsChatbotAsk(q);
+            window._nsChatStreamCallback = null;
+            responseEl.innerHTML += '<div style="background:#f3f0ff;color:#1e1b2e;padding:12px 16px;border-radius:4px 16px 16px 16px;margin-top:8px">' + nsRenderMd(text) + '</div>';
+            responseEl.scrollTop = responseEl.scrollHeight;
+        }
+
+        function resetQuiz() {
+            answers = {};
+            nsChatHistory = [];
+            document.getElementById('quiz-section').classList.remove('hidden');
+            document.getElementById('result-section').classList.add('hidden');
+            document.getElementById('ai-section').classList.add('hidden');
+            setStep(1);
+            renderQuiz();
+            updateProgress();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        document.getElementById('ai-followup').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); askCareerAI(); }
+        });
+
+        // INIT
+        renderQuiz();
+    </script>
+
+</body>
+
+</html>

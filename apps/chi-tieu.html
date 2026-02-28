@@ -1,0 +1,241 @@
+﻿<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Theo Dõi Chi Tiêu — AITECH</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <link rel="stylesheet" href="../aitech.css">
+    <script>tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Quicksand', 'sans-serif'] }, colors: { 'ns-purple': '#7c5cfc', 'ns-purple-light': '#a78bfa', 'ns-purple-soft': '#ede9fe', 'dark-text': '#5A4A4A' } } } }</script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="../firebase-config.js"></script>
+    <script src="../aitech.js"></script>
+</head>
+
+<body class="relative min-h-screen pb-20 font-sans text-dark-text dark:text-gray-100">
+
+    <div class="blob bg-green-100 w-[400px] h-[400px] rounded-full top-[-100px] right-[-100px] animate-float"></div>
+
+    <button onclick="toggleTheme()"
+        class="fixed bottom-8 right-8 z-[60] bg-white dark:bg-slate-800 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-yellow-500 border-4 border-white dark:border-slate-700 hover:scale-110 transition-all">
+        <i class="ph-fill ph-sun text-2xl dark:hidden"></i><i
+            class="ph-fill ph-moon text-2xl text-blue-300 hidden dark:block"></i>
+    </button>
+
+    <nav class="p-4 sm:p-6 sticky top-0 z-50" id="navbar">
+        <div class="max-w-6xl mx-auto flex justify-between items-center glass-card px-6 py-3 rounded-full">
+            <a href="../apps.html"
+                class="flex items-center gap-2 text-gray-500 hover:text-ns-purple transition-colors font-bold group"><i
+                    class="ph-bold ph-arrow-left group-hover:-translate-x-1 transition-transform"></i> Ứng dụng</a>
+            <div class="font-bold text-lg text-green-600 flex items-center gap-2"><i class="ph-fill ph-wallet"></i><span
+                    class="hidden sm:inline">Chi Tiêu</span></div>
+            <div></div>
+        </div>
+    </nav>
+
+    <main class="max-w-4xl mx-auto px-4 mt-8 space-y-6">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-extrabold dark:text-white">📊 Theo Dõi <span class="text-green-600">Chi Tiêu</span>
+            </h1>
+            <p class="text-gray-500 text-sm mt-2">Ghi nhận khoản chi hàng ngày — dữ liệu lưu offline trên thiết bị.</p>
+        </header>
+
+        <!-- Add Entry -->
+        <div class="glass-card p-6 rounded-[2rem]">
+            <h2 class="font-bold text-lg dark:text-white mb-4"><i
+                    class="ph-bold ph-plus-circle text-green-500 mr-2"></i>Thêm khoản chi</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <select id="exp-cat"
+                    class="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm font-bold focus:outline-none focus:border-ns-purple">
+                    <option value="an-uong">🍜 Ăn uống</option>
+                    <option value="hoc-tap">📚 Học tập</option>
+                    <option value="di-lai">🚌 Di lại</option>
+                    <option value="giai-tri">🎮 Giải trí</option>
+                    <option value="ca-nhan">🧴 Cá nhân</option>
+                    <option value="khac">📦 Khác</option>
+                </select>
+                <input type="number" id="exp-amount" placeholder="Số tiền (VNĐ)" min="0"
+                    class="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm font-bold focus:outline-none focus:border-ns-purple">
+                <input type="date" id="exp-date"
+                    class="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm font-bold focus:outline-none focus:border-ns-purple">
+                <input type="text" id="exp-note" placeholder="Ghi chú (tùy chọn)"
+                    class="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm font-bold focus:outline-none focus:border-ns-purple">
+            </div>
+            <button onclick="addExpense()"
+                class="mt-4 bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-xl font-bold text-sm transition-all"><i
+                    class="ph-bold ph-plus mr-1"></i>Thêm</button>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="glass-card p-4 rounded-2xl text-center">
+                <p class="text-xs font-bold text-gray-400 uppercase">Hôm nay</p>
+                <p id="stat-today" class="text-lg font-extrabold text-green-600">0đ</p>
+            </div>
+            <div class="glass-card p-4 rounded-2xl text-center">
+                <p class="text-xs font-bold text-gray-400 uppercase">Tuần này</p>
+                <p id="stat-week" class="text-lg font-extrabold text-blue-500">0đ</p>
+            </div>
+            <div class="glass-card p-4 rounded-2xl text-center">
+                <p class="text-xs font-bold text-gray-400 uppercase">Tháng này</p>
+                <p id="stat-month" class="text-lg font-extrabold text-ns-purple">0đ</p>
+            </div>
+            <div class="glass-card p-4 rounded-2xl text-center">
+                <p class="text-xs font-bold text-gray-400 uppercase">Tổng</p>
+                <p id="stat-total" class="text-lg font-extrabold text-orange-500">0đ</p>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="glass-card p-6 rounded-[2rem]">
+                <h3 class="font-bold text-sm mb-4 dark:text-white">Theo danh mục</h3><canvas id="chart-cat"></canvas>
+            </div>
+            <div class="glass-card p-6 rounded-[2rem]">
+                <h3 class="font-bold text-sm mb-4 dark:text-white">7 ngày gần nhất</h3><canvas
+                    id="chart-daily"></canvas>
+            </div>
+        </div>
+
+        <!-- History -->
+        <div class="glass-card p-6 rounded-[2rem]">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="font-bold text-lg dark:text-white">Lịch sử</h2>
+                <div class="flex gap-2">
+                    <button onclick="exportData()"
+                        class="text-xs font-bold text-ns-purple bg-ns-purple/10 px-3 py-1 rounded-full hover:bg-ns-purple hover:text-white transition-all"><i
+                            class="ph-bold ph-download-simple mr-1"></i>Export</button>
+                    <label
+                        class="text-xs font-bold text-green-600 bg-green-100 px-3 py-1 rounded-full hover:bg-green-600 hover:text-white transition-all cursor-pointer"><i
+                            class="ph-bold ph-upload-simple mr-1"></i>Import<input type="file" accept=".json"
+                            onchange="importData(event)" class="hidden"></label>
+                    <button onclick="if(confirm('Xóa tất cả?')){expenses=[];save();render()}"
+                        class="text-xs font-bold text-red-500 bg-red-100 px-3 py-1 rounded-full hover:bg-red-500 hover:text-white transition-all"><i
+                            class="ph-bold ph-trash mr-1"></i>Xóa hết</button>
+                </div>
+            </div>
+            <div id="history" class="space-y-2 max-h-80 overflow-y-auto"></div>
+        </div>
+    </main>
+
+    <script>
+        const CAT_LABELS = { 'an-uong': '🍜 Ăn uống', 'hoc-tap': '📚 Học tập', 'di-lai': '🚌 Di lại', 'giai-tri': '🎮 Giải trí', 'ca-nhan': '🧴 Cá nhân', 'khac': '📦 Khác' };
+        const CAT_COLORS = { 'an-uong': '#fb923c', 'hoc-tap': '#7c5cfc', 'di-lai': '#38bdf8', 'giai-tri': '#f472b6', 'ca-nhan': '#34d399', 'khac': '#94a3b8' };
+        let expenses = nsLoad('ns_expenses', []);
+        let chartCat, chartDaily;
+
+        document.getElementById('exp-date').valueAsDate = new Date();
+
+        // BroadcastChannel for multi-tab sync
+        const bc = new BroadcastChannel('ns_expenses');
+        bc.onmessage = (e) => { expenses = e.data; save(false); render() };
+
+        function save(broadcast = true) {
+            nsStore('ns_expenses', expenses);
+            if (broadcast) bc.postMessage(expenses);
+        }
+
+        function addExpense() {
+            const cat = document.getElementById('exp-cat').value;
+            const amount = parseInt(document.getElementById('exp-amount').value);
+            const date = document.getElementById('exp-date').value;
+            const note = document.getElementById('exp-note').value.trim();
+            if (!amount || amount <= 0) { alert('Nhập số tiền hợp lệ'); return }
+            if (!date) { alert('Chọn ngày'); return }
+            expenses.push({ id: Date.now(), cat, amount, date, note });
+            save(); render();
+            document.getElementById('exp-amount').value = '';
+            document.getElementById('exp-note').value = '';
+        }
+
+        function deleteExpense(id) {
+            expenses = expenses.filter(e => e.id !== id); save(); render();
+        }
+
+        function fmt(n) { return new Intl.NumberFormat('vi-VN').format(n) + 'đ' }
+
+        function render() {
+            const today = new Date().toISOString().slice(0, 10);
+            const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+            const monthStart = today.slice(0, 7);
+
+            document.getElementById('stat-today').textContent = fmt(expenses.filter(e => e.date === today).reduce((s, e) => s + e.amount, 0));
+            document.getElementById('stat-week').textContent = fmt(expenses.filter(e => e.date >= weekAgo).reduce((s, e) => s + e.amount, 0));
+            document.getElementById('stat-month').textContent = fmt(expenses.filter(e => e.date.startsWith(monthStart)).reduce((s, e) => s + e.amount, 0));
+            document.getElementById('stat-total').textContent = fmt(expenses.reduce((s, e) => s + e.amount, 0));
+
+            // History
+            const sorted = [...expenses].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+            document.getElementById('history').innerHTML = sorted.length ? sorted.map(e => `
+        <div class="flex items-center justify-between p-3 bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700">
+          <div class="flex items-center gap-3">
+            <span class="text-lg">${CAT_LABELS[e.cat]?.slice(0, 2) || '📦'}</span>
+            <div>
+              <span class="font-bold text-sm dark:text-white">${CAT_LABELS[e.cat] || e.cat}</span>
+              ${e.note ? `<span class="text-xs text-gray-400 ml-2">${e.note}</span>` : ''}
+              <span class="block text-[10px] text-gray-400">${e.date}</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-sm text-red-500">-${fmt(e.amount)}</span>
+            <button onclick="deleteExpense(${e.id})" class="text-gray-300 hover:text-red-500 transition-colors"><i class="ph-bold ph-x text-xs"></i></button>
+          </div>
+        </div>
+      `).join('') : '<p class="text-center text-gray-400 text-sm py-8">Chưa có khoản chi nào.</p>';
+
+            // Charts
+            renderCharts();
+        }
+
+        function renderCharts() {
+            // Category donut
+            const catTotals = {};
+            expenses.forEach(e => { catTotals[e.cat] = (catTotals[e.cat] || 0) + e.amount });
+            const catLabels = Object.keys(catTotals).map(k => CAT_LABELS[k] || k);
+            const catData = Object.values(catTotals);
+            const catColors = Object.keys(catTotals).map(k => CAT_COLORS[k] || '#94a3b8');
+            if (chartCat) chartCat.destroy();
+            chartCat = new Chart(document.getElementById('chart-cat'), {
+                type: 'doughnut', data: { labels: catLabels, datasets: [{ data: catData, backgroundColor: catColors, borderWidth: 0 }] },
+                options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { font: { family: 'Quicksand', size: 11 } } } } }
+            });
+
+            // Daily bar (last 7 days)
+            const days = []; for (let i = 6; i >= 0; i--) { const d = new Date(Date.now() - i * 86400000); days.push(d.toISOString().slice(0, 10)) }
+            const dayTotals = days.map(d => expenses.filter(e => e.date === d).reduce((s, e) => s + e.amount, 0));
+            const dayLabels = days.map(d => { const dt = new Date(d + 'T00:00'); return ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'][dt.getDay()] });
+            if (chartDaily) chartDaily.destroy();
+            chartDaily = new Chart(document.getElementById('chart-daily'), {
+                type: 'bar', data: { labels: dayLabels, datasets: [{ data: dayTotals, backgroundColor: '#7c5cfc', borderRadius: 8, barThickness: 24 }] },
+                options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { callback: v => fmt(v), font: { family: 'Quicksand' } } }, x: { ticks: { font: { family: 'Quicksand', weight: 'bold' } } } } }
+            });
+        }
+
+        function exportData() {
+            const blob = new Blob([JSON.stringify(expenses, null, 2)], { type: 'application/json' });
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+            a.download = `aitech-chitieu-${new Date().toISOString().slice(0, 10)}.json`; a.click();
+        }
+
+        function importData(e) {
+            const file = e.target.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                try { const data = JSON.parse(ev.target.result); if (Array.isArray(data)) { expenses = [...expenses, ...data]; save(); render(); alert('Import thành công!') } }
+                catch (err) { alert('File không hợp lệ') }
+            };
+            reader.readAsText(file);
+        }
+
+        render();
+    </script>
+</body>
+
+</html>

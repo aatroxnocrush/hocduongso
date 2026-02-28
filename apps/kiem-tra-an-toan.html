@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Kiểm Tra An Toàn Mạng — AITECH</title>
+    <meta name="description"
+        content="Kiểm tra URL đáng ngờ, quét file bằng VirusTotal — bảo vệ học sinh THPT trước mối đe dọa an ninh mạng.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="../aitech.css">
+    <script>tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Quicksand', 'sans-serif'] }, colors: { 'ns-purple': '#7c5cfc', 'ns-purple-light': '#a78bfa', 'ns-purple-soft': '#ede9fe', 'dark-text': '#5A4A4A' } } } }</script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="../firebase-config.js"></script>
+    <script src="../aitech.js"></script>
+</head>
+
+<body class="relative min-h-screen font-sans text-dark-text dark:text-gray-100 pb-20">
+
+    <div class="blob bg-cyan-100 w-[500px] h-[500px] rounded-full top-[-100px] left-[-150px] animate-float"></div>
+    <div class="blob bg-emerald-100 w-[400px] h-[400px] rounded-full bottom-20 right-[-100px]"></div>
+
+    <button onclick="toggleTheme()"
+        class="fixed bottom-8 right-8 z-[60] bg-white dark:bg-slate-800 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-yellow-500 border-4 border-white dark:border-slate-700 hover:scale-110 transition-all">
+        <i class="ph-fill ph-sun text-2xl dark:hidden"></i><i
+            class="ph-fill ph-moon text-2xl text-blue-300 hidden dark:block"></i>
+    </button>
+
+    <nav class="p-4 sm:p-6 sticky top-0 z-50" id="navbar">
+        <div class="max-w-6xl mx-auto flex justify-between items-center glass-card px-6 py-3 rounded-full">
+            <a href="../apps.html"
+                class="flex items-center gap-2 text-gray-500 hover:text-ns-purple transition-colors font-bold group"><i
+                    class="ph-bold ph-arrow-left group-hover:-translate-x-1 transition-transform"></i> Ứng dụng</a>
+            <div class="font-bold text-lg text-cyan-500 flex items-center gap-2"><i
+                    class="ph-fill ph-shield-checkered"></i><span class="hidden sm:inline">An Toàn Mạng</span>
+            </div>
+            <a href="../index.html"
+                class="text-sm font-bold text-gray-500 hover:text-ns-purple transition-colors hidden md:block">Trang chủ
+                <i class="ph-bold ph-arrow-right"></i></a>
+        </div>
+    </nav>
+
+    <header class="text-center px-4 mb-12 mt-8 reveal">
+        <span
+            class="inline-block bg-cyan-50 dark:bg-cyan-900/20 text-cyan-600 text-[10px] font-black px-4 py-1.5 rounded-full shadow-sm mb-4 uppercase tracking-widest border border-cyan-200 dark:border-cyan-800">An
+            ninh mạng</span>
+        <h1 class="text-3xl md:text-5xl font-extrabold dark:text-white mb-4 leading-tight">Kiểm Tra <span
+                class="text-cyan-500 italic">An Toàn Mạng</span> 🔒</h1>
+        <p class="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">Kiểm tra link đáng ngờ, quét file tìm mã độc —
+            bảo vệ bản thân trước các mối đe dọa trực tuyến.</p>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-4">
+
+        <!-- TAB NAV -->
+        <div class="flex flex-wrap gap-2 justify-center mb-10">
+            <button onclick="switchTab('url')"
+                class="tab-item active bg-cyan-500 text-white px-5 py-2 rounded-full text-xs font-bold transition-all"
+                data-tab="url">🔗 Kiểm tra URL</button>
+            <button onclick="switchTab('file')"
+                class="tab-item bg-gray-100 dark:bg-slate-800 text-gray-500 px-5 py-2 rounded-full text-xs font-bold transition-all"
+                data-tab="file">📁 Quét file</button>
+            <button onclick="switchTab('tips')"
+                class="tab-item bg-gray-100 dark:bg-slate-800 text-gray-500 px-5 py-2 rounded-full text-xs font-bold transition-all"
+                data-tab="tips">💡 Mẹo an toàn</button>
+        </div>
+
+        <!-- ==================== TAB: URL CHECKER ==================== -->
+        <section id="tab-url" class="tab-content space-y-6">
+            <div class="glass-card p-6 sm:p-10 rounded-[2rem]">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-12 h-12 bg-cyan-100 dark:bg-cyan-900/30 rounded-xl flex items-center justify-center">
+                        <i class="ph-fill ph-link text-2xl text-cyan-500"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold dark:text-white">Kiểm Tra Uy Tín URL</h2>
+                        <p class="text-xs text-gray-500">Nhập link để phân tích tính an toàn</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-3 mb-4">
+                    <input id="url-input" type="url" placeholder="https://example.com hoặc bit.ly/abc123..."
+                        class="flex-1 bg-white dark:bg-slate-800 border-2 border-cyan-300/30 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-cyan-400 transition-all dark:text-white font-semibold">
+                    <button onclick="analyzeURL()"
+                        class="bg-cyan-500 text-white px-6 py-3 rounded-xl font-bold hover:bg-cyan-600 transition-all text-sm shrink-0 flex items-center gap-2">
+                        <i class="ph-bold ph-magnifying-glass"></i> Kiểm tra
+                    </button>
+                </div>
+
+                <!-- Quick test URLs -->
+                <div class="flex flex-wrap gap-2 mb-6">
+                    <span class="text-xs text-gray-400 font-bold">Thử nhanh:</span>
+                    <button onclick="document.getElementById('url-input').value='https://google.com'; analyzeURL()"
+                        class="text-xs bg-green-50 dark:bg-green-900/20 text-green-600 px-3 py-1 rounded-full font-bold hover:bg-green-100 transition-all">google.com
+                        ✅</button>
+                    <button
+                        onclick="document.getElementById('url-input').value='http://faceb00k-login.xyz/verify'; analyzeURL()"
+                        class="text-xs bg-red-50 dark:bg-red-900/20 text-red-500 px-3 py-1 rounded-full font-bold hover:bg-red-100 transition-all">faceb00k-login.xyz
+                        ⚠️</button>
+                    <button
+                        onclick="document.getElementById('url-input').value='https://bit.ly/free-iphone-2026'; analyzeURL()"
+                        class="text-xs bg-orange-50 dark:bg-orange-900/20 text-orange-500 px-3 py-1 rounded-full font-bold hover:bg-orange-100 transition-all">bit.ly/free-iphone
+                        ⚠️</button>
+                </div>
+
+                <!-- Results -->
+                <div id="url-result" class="hidden"></div>
+            </div>
+
+            <!-- VirusTotal API Key (Optional) -->
+            <div class="glass-card p-6 rounded-[2rem]">
+                <div class="flex items-center justify-between cursor-pointer" onclick="toggleVTSettings()">
+                    <div class="flex items-center gap-3">
+                        <i class="ph-fill ph-gear text-xl text-gray-400"></i>
+                        <span class="font-bold text-sm dark:text-white">VirusTotal API Key (tuỳ chọn)</span>
+                    </div>
+                    <i class="ph-bold ph-caret-down text-gray-400" id="vt-caret"></i>
+                </div>
+                <div id="vt-settings" class="hidden mt-4 space-y-3">
+                    <p class="text-xs text-gray-500">Nhập API key VirusTotal để quét trực tiếp (không cần mở tab mới).
+                        <a href="https://www.virustotal.com/gui/sign-in" target="_blank"
+                            class="text-cyan-500 underline font-bold">Đăng ký miễn phí</a> → Profile → API Key.
+                    </p>
+                    <div class="flex gap-2">
+                        <input id="vt-api-key" type="password" placeholder="Dán API key VirusTotal vào đây..."
+                            class="flex-1 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-xl px-4 py-2 text-xs font-semibold dark:text-white">
+                        <button onclick="saveVTKey()"
+                            class="bg-cyan-500 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-cyan-600 transition-all">Lưu</button>
+                        <button onclick="clearVTKey()"
+                            class="bg-gray-100 dark:bg-slate-700 text-gray-500 px-4 py-2 rounded-xl text-xs font-bold hover:bg-gray-200 transition-all">Xóa</button>
+                    </div>
+                    <div id="vt-key-status" class="text-xs font-bold"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== TAB: FILE SCANNER ==================== -->
+        <section id="tab-file" class="tab-content hidden space-y-6">
+            <div class="glass-card p-6 sm:p-10 rounded-[2rem]">
+                <div class="flex items-center gap-3 mb-6">
+                    <div
+                        class="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center">
+                        <i class="ph-fill ph-file-search text-2xl text-emerald-500"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold dark:text-white">Quét File Tìm Mã Độc</h2>
+                        <p class="text-xs text-gray-500">Tải file lên để kiểm tra bằng VirusTotal</p>
+                    </div>
+                </div>
+
+                <div class="border-2 border-dashed border-emerald-300 dark:border-emerald-700 rounded-2xl p-8 text-center hover:border-emerald-400 transition-all cursor-pointer"
+                    id="drop-zone" onclick="document.getElementById('file-input').click()">
+                    <input type="file" id="file-input" class="hidden" onchange="handleFileSelect(this)">
+                    <i class="ph-fill ph-cloud-arrow-up text-5xl text-emerald-400 mb-3"></i>
+                    <p class="font-bold dark:text-white mb-1">Kéo thả file hoặc nhấn để chọn</p>
+                    <p class="text-xs text-gray-400">Hỗ trợ mọi loại file • Tối đa 650MB</p>
+                </div>
+
+                <!-- File info + Results -->
+                <div id="file-info" class="hidden mt-6"></div>
+                <div id="file-result" class="hidden mt-6"></div>
+            </div>
+
+            <div class="glass-card p-6 rounded-[2rem]">
+                <h3 class="font-bold dark:text-white mb-3 flex items-center gap-2"><i
+                        class="ph-fill ph-info text-cyan-500"></i> Cách hoạt động</h3>
+                <div class="space-y-3 text-sm text-gray-500">
+                    <div class="flex items-start gap-3">
+                        <span
+                            class="bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs shrink-0">1</span>
+                        <p>File được tính <strong>mã hash SHA-256</strong> ngay trên trình duyệt (không upload đi đâu).
+                        </p>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <span
+                            class="bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs shrink-0">2</span>
+                        <p>Mã hash được tra cứu trên <strong>VirusTotal</strong> — cơ sở dữ liệu 70+ hãng antivirus.</p>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <span
+                            class="bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs shrink-0">3</span>
+                        <p>Nếu file chưa có trên VirusTotal, bạn có thể <strong>submit để quét</strong> trực tiếp.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== TAB: TIPS ==================== -->
+        <section id="tab-tips" class="tab-content hidden">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div
+                    class="glass-card p-6 rounded-[2rem] border-l-4 border-cyan-400 hover:-translate-y-1 transition-all">
+                    <h3 class="font-bold text-lg mb-3 dark:text-white">🔗 Kiểm tra URL an toàn</h3>
+                    <ul class="space-y-2 text-sm text-gray-500">
+                        <li>• Xem có <strong>HTTPS (🔒)</strong> không — HTTP không mã hóa</li>
+                        <li>• Kiểm tra domain chính xác: <code class="text-cyan-500">facebook.com</code> ≠ <code
+                                class="text-red-500">faceb00k.com</code></li>
+                        <li>• Cảnh giác link rút gọn (bit.ly, tinyurl...)</li>
+                        <li>• Không nhấn link từ tin nhắn lạ</li>
+                    </ul>
+                </div>
+                <div
+                    class="glass-card p-6 rounded-[2rem] border-l-4 border-emerald-400 hover:-translate-y-1 transition-all">
+                    <h3 class="font-bold text-lg mb-3 dark:text-white">📁 Nhận biết file an toàn</h3>
+                    <ul class="space-y-2 text-sm text-gray-500">
+                        <li>• <strong>An toàn:</strong> .pdf, .docx, .xlsx, .pptx, .jpg, .png</li>
+                        <li>• <strong>Nguy hiểm:</strong> <code
+                                class="text-red-500">.exe, .bat, .cmd, .scr, .vbs, .js</code></li>
+                        <li>• Không mở file đuôi kép: <code class="text-red-500">baitap.pdf.exe</code></li>
+                        <li>• Quét file tải về bằng VirusTotal trước khi mở</li>
+                    </ul>
+                </div>
+                <div
+                    class="glass-card p-6 rounded-[2rem] border-l-4 border-orange-400 hover:-translate-y-1 transition-all">
+                    <h3 class="font-bold text-lg mb-3 dark:text-white">📧 Email & Tin nhắn</h3>
+                    <ul class="space-y-2 text-sm text-gray-500">
+                        <li>• Ngân hàng <strong>không bao giờ</strong> gửi link đăng nhập qua email</li>
+                        <li>• Kiểm tra email người gửi — giả mạo thường có ký tự lạ</li>
+                        <li>• Không nhập mật khẩu/OTP ở trang được gửi qua tin nhắn</li>
+                        <li>• Khi nghi ngờ → vào app/web chính thức kiểm tra</li>
+                    </ul>
+                </div>
+                <div
+                    class="glass-card p-6 rounded-[2rem] border-l-4 border-purple-400 hover:-translate-y-1 transition-all">
+                    <h3 class="font-bold text-lg mb-3 dark:text-white">🔑 Bảo vệ tài khoản</h3>
+                    <ul class="space-y-2 text-sm text-gray-500">
+                        <li>• Bật <strong>Xác thực 2 bước (2FA)</strong> cho mọi tài khoản</li>
+                        <li>• Mật khẩu tối thiểu <strong>12 ký tự</strong>, có chữ + số + ký tự đặc biệt</li>
+                        <li>• Không dùng chung mật khẩu cho nhiều tài khoản</li>
+                        <li>• Dùng ứng dụng quản lý mật khẩu (Bitwarden miễn phí)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div
+                class="glass-card p-6 rounded-[2rem] bg-gradient-to-br from-cyan-50 to-white dark:from-cyan-900/10 dark:to-slate-900">
+                <h3 class="font-bold text-lg dark:text-white mb-4">🛠️ Công cụ hữu ích miễn phí</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <a href="https://www.virustotal.com" target="_blank"
+                        class="bg-white dark:bg-slate-800 p-4 rounded-xl flex items-center gap-3 hover:-translate-y-1 transition-all border border-gray-100 dark:border-slate-700">
+                        <div
+                            class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center text-blue-500">
+                            <i class="ph-fill ph-virus text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="font-bold text-sm dark:text-white">VirusTotal</p>
+                            <p class="text-xs text-gray-400">Quét URL + File miễn phí</p>
+                        </div>
+                    </a>
+                    <a href="https://haveibeenpwned.com" target="_blank"
+                        class="bg-white dark:bg-slate-800 p-4 rounded-xl flex items-center gap-3 hover:-translate-y-1 transition-all border border-gray-100 dark:border-slate-700">
+                        <div
+                            class="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center text-red-500">
+                            <i class="ph-fill ph-warning text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="font-bold text-sm dark:text-white">Have I Been Pwned</p>
+                            <p class="text-xs text-gray-400">Email bị lộ chưa?</p>
+                        </div>
+                    </a>
+                    <a href="https://www.google.com/transparencyreport/safe-browsing/diagnostic" target="_blank"
+                        class="bg-white dark:bg-slate-800 p-4 rounded-xl flex items-center gap-3 hover:-translate-y-1 transition-all border border-gray-100 dark:border-slate-700">
+                        <div
+                            class="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center text-green-500">
+                            <i class="ph-fill ph-google-logo text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="font-bold text-sm dark:text-white">Google Safe Browsing</p>
+                            <p class="text-xs text-gray-400">Kiểm tra web độc hại</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="text-center mt-16 text-gray-400 dark:text-gray-600 text-sm pb-10">
+        <div class="flex justify-center items-center gap-2 mb-4"><i
+                class="ph-fill ph-sparkle text-2xl text-ns-purple"></i><span
+                class="font-bold text-slate-800 dark:text-white uppercase tracking-wider">AITECH</span></div>
+        <p>Dành cho học sinh THPT Việt Nam — 2026</p>
+    </footer>
+
+    <script>
+        // ============================================================
+        // TAB SWITCHING
+        // ============================================================
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById('tab-' + tab).classList.remove('hidden');
+            document.querySelectorAll('.tab-item').forEach(btn => {
+                if (btn.dataset.tab === tab) {
+                    btn.className = 'tab-item active bg-cyan-500 text-white px-5 py-2 rounded-full text-xs font-bold transition-all';
+                } else {
+                    btn.className = 'tab-item bg-gray-100 dark:bg-slate-800 text-gray-500 px-5 py-2 rounded-full text-xs font-bold transition-all hover:bg-gray-200';
+                }
+            });
+        }
+
+        // ============================================================
+        // URL ANALYZER
+        // ============================================================
+        const SUSPICIOUS_TLDS = ['.xyz', '.tk', '.ml', '.ga', '.cf', '.gq', '.top', '.buzz', '.club', '.icu', '.cam', '.site', '.online', '.fun', '.space', '.rest', '.bid'];
+        const TRUSTED_DOMAINS = ['google.com', 'youtube.com', 'facebook.com', 'instagram.com', 'twitter.com', 'x.com', 'tiktok.com', 'zalo.me', 'shopee.vn', 'lazada.vn', 'tiki.vn', 'vietcombank.com.vn', 'bidv.com.vn', 'vietinbank.vn', 'techcombank.com.vn', 'momo.vn', 'vnpay.vn', 'github.com', 'wikipedia.org', 'microsoft.com', 'apple.com', 'amazon.com', 'netflix.com', 'spotify.com'];
+        const URL_SHORTENERS = ['bit.ly', 'tinyurl.com', 'goo.gl', 't.co', 'is.gd', 'v.gd', 'ow.ly', 'rebrand.ly', 'shorturl.at', 'tiny.cc'];
+        const PHISHING_PATTERNS = ['login', 'verify', 'confirm', 'account', 'secure', 'update', 'banking', 'password', 'signin', 'xacnhan', 'dangnhap', 'taikhoan'];
+
+        function analyzeURL() {
+            const input = document.getElementById('url-input').value.trim();
+            if (!input) { alert('Vui lòng nhập URL!'); return; }
+
+            let url;
+            try {
+                url = new URL(input.startsWith('http') ? input : 'http://' + input);
+            } catch {
+                showURLResult({ score: 80, level: 'danger', issues: ['❌ URL không hợp lệ — đây không phải link đúng định dạng.'], domain: input });
+                return;
+            }
+
+            const hostname = url.hostname.toLowerCase();
+            const fullUrl = url.href;
+            const issues = [];
+            const positives = [];
+            let score = 0; // 0 = safe, 100 = dangerous
+
+            // Check protocol
+            if (url.protocol === 'http:') {
+                issues.push('⚠️ Không có HTTPS — dữ liệu không được mã hóa');
+                score += 15;
+            } else {
+                positives.push('✅ Có HTTPS — kết nối được mã hóa');
+            }
+
+            // Check trusted domains
+            const isTrusted = TRUSTED_DOMAINS.some(d => hostname === d || hostname.endsWith('.' + d));
+            if (isTrusted) {
+                positives.push('✅ Domain thuộc danh sách uy tín');
+                score = Math.max(0, score - 20);
+            }
+
+            // Check suspicious TLDs
+            const hasSusTLD = SUSPICIOUS_TLDS.some(tld => hostname.endsWith(tld));
+            if (hasSusTLD) {
+                issues.push('⚠️ Đuôi domain đáng ngờ (thường dùng cho phishing/spam)');
+                score += 25;
+            }
+
+            // Check URL shorteners
+            const isShortener = URL_SHORTENERS.some(s => hostname === s || hostname.endsWith('.' + s));
+            if (isShortener) {
+                issues.push('⚠️ Link rút gọn — không thể xác minh trang đích');
+                score += 20;
+            }
+
+            // Check phishing patterns in URL
+            const urlLower = fullUrl.toLowerCase();
+            const phishMatch = PHISHING_PATTERNS.filter(p => urlLower.includes(p));
+            if (phishMatch.length > 0 && !isTrusted) {
+                issues.push(`⚠️ URL chứa từ khóa nhạy cảm: ${phishMatch.join(', ')}`);
+                score += 15;
+            }
+
+            // Check for IP address as hostname
+            if (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname)) {
+                issues.push('⚠️ URL dùng địa chỉ IP thay vì tên miền — dấu hiệu đáng ngờ');
+                score += 30;
+            }
+
+            // Check for typosquatting (similar to famous brands)
+            const typoCheck = [
+                { brand: 'facebook', pattern: /faceb[o0][o0]k|facebok|facbook/i },
+                { brand: 'google', pattern: /go[o0]g[l1]e|googIe|g00gle/i },
+                { brand: 'vietcombank', pattern: /vietc[o0]mbank|vietcomban[kc]|vietc0m/i },
+                { brand: 'shopee', pattern: /sh[o0]pee|shop[e3]e/i },
+                { brand: 'apple', pattern: /app[l1]e|aple|appIe/i },
+            ];
+            typoCheck.forEach(t => {
+                if (t.pattern.test(hostname) && !hostname.includes(t.brand + '.')) {
+                    issues.push(`🚨 Có thể giả mạo ${t.brand} (typosquatting)`);
+                    score += 35;
+                }
+            });
+
+            // Check for many subdomains
+            const subdomains = hostname.split('.').length;
+            if (subdomains > 3 && !isTrusted) {
+                issues.push('⚠️ Nhiều subdomain bất thường — có thể che giấu domain thật');
+                score += 10;
+            }
+
+            // Check for suspicious characters
+            if (/[а-яА-Я]/.test(hostname)) {
+                issues.push('🚨 Chứa ký tự Cyrillic giả dạng chữ Latin (IDN homograph attack)');
+                score += 40;
+            }
+
+            // Check long path with encoded characters
+            if (url.pathname.length > 100 || (url.search && url.search.length > 200)) {
+                issues.push('⚠️ URL dài bất thường — có thể chứa mã theo dõi hoặc payload');
+                score += 10;
+            }
+
+            // No issues found
+            if (issues.length === 0) {
+                positives.push('✅ Không phát hiện dấu hiệu đáng ngờ');
+            }
+
+            score = Math.min(100, Math.max(0, score));
+            let level = 'safe';
+            if (score >= 60) level = 'danger';
+            else if (score >= 30) level = 'warning';
+
+            showURLResult({ score, level, issues, positives, domain: hostname, fullUrl });
+        }
+
+        function showURLResult({ score, level, issues = [], positives = [], domain, fullUrl }) {
+            const colors = {
+                safe: { bg: 'bg-green-50 dark:bg-green-900/20', text: 'text-green-600 dark:text-green-400', border: 'border-green-300', label: '✅ An toàn', bar: 'bg-green-500' },
+                warning: { bg: 'bg-orange-50 dark:bg-orange-900/20', text: 'text-orange-600 dark:text-orange-400', border: 'border-orange-300', label: '⚠️ Đáng ngờ', bar: 'bg-orange-500' },
+                danger: { bg: 'bg-red-50 dark:bg-red-900/20', text: 'text-red-600 dark:text-red-400', border: 'border-red-300', label: '🚨 Nguy hiểm', bar: 'bg-red-500' }
+            };
+            const c = colors[level];
+
+            // Build VirusTotal URL
+            const vtUrl = fullUrl ? `https://www.virustotal.com/gui/url/${btoa(fullUrl).replace(/=/g, '')}` : '#';
+
+            const el = document.getElementById('url-result');
+            el.classList.remove('hidden');
+            el.innerHTML = `
+                <div class="${c.bg} rounded-2xl p-6 border ${c.border}">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <p class="font-bold text-lg ${c.text}">${c.label}</p>
+                            <p class="text-xs text-gray-500 font-mono">${domain || ''}</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="w-16 h-16 rounded-full flex items-center justify-center ${c.bg} border-4 ${c.border}">
+                                <span class="text-xl font-black ${c.text}">${100 - score}</span>
+                            </div>
+                            <p class="text-[10px] text-gray-400 mt-1 font-bold">Điểm an toàn</p>
+                        </div>
+                    </div>
+
+                    <div class="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2 mb-4">
+                        <div class="${c.bar} h-2 rounded-full transition-all duration-700" style="width:${100 - score}%"></div>
+                    </div>
+
+                    ${issues.length > 0 ? `
+                    <div class="mb-3">
+                        <p class="text-xs font-bold text-red-600 dark:text-red-400 mb-2">⚠️ Cảnh báo:</p>
+                        <ul class="space-y-1">${issues.map(i => `<li class="text-xs text-gray-600 dark:text-gray-300">${i}</li>`).join('')}</ul>
+                    </div>` : ''}
+
+                    ${positives.length > 0 ? `
+                    <div class="mb-4">
+                        <ul class="space-y-1">${positives.map(p => `<li class="text-xs text-green-600 dark:text-green-400">${p}</li>`).join('')}</ul>
+                    </div>` : ''}
+
+                    <div class="flex flex-wrap gap-2 mt-4">
+                        <a href="${vtUrl}" target="_blank"
+                            class="bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-blue-600 transition-all flex items-center gap-1">
+                            <i class="ph-bold ph-arrow-square-out"></i> Quét trên VirusTotal
+                        </a>
+                        <a href="https://transparencyreport.google.com/safe-browsing/search?url=${encodeURIComponent(fullUrl || domain)}" target="_blank"
+                            class="bg-white dark:bg-slate-800 text-gray-600 dark:text-gray-300 px-4 py-2 rounded-xl text-xs font-bold hover:bg-gray-100 dark:hover:bg-slate-700 transition-all flex items-center gap-1 border">
+                            <i class="ph-bold ph-google-logo"></i> Google Safe Browsing
+                        </a>
+                    </div>
+                </div>
+                <p class="text-[10px] text-gray-400 mt-2 text-center">⚠️ Kết quả dựa trên phân tích heuristic. Luôn kiểm tra thêm trên VirusTotal để có kết quả chính xác nhất.</p>
+            `;
+        }
+
+        // ============================================================
+        // FILE SCANNER
+        // ============================================================
+        const DANGEROUS_EXTENSIONS = ['exe', 'bat', 'cmd', 'scr', 'vbs', 'js', 'wsf', 'msi', 'pif', 'com', 'ps1', 'reg', 'inf', 'lnk', 'hta'];
+
+        // Drag & drop
+        const dropZone = document.getElementById('drop-zone');
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-emerald-500', 'bg-emerald-50', 'dark:bg-emerald-900/10'); });
+        dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('border-emerald-500', 'bg-emerald-50', 'dark:bg-emerald-900/10'); });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-emerald-500', 'bg-emerald-50', 'dark:bg-emerald-900/10');
+            if (e.dataTransfer.files.length > 0) {
+                processFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        function handleFileSelect(input) {
+            if (input.files.length > 0) processFile(input.files[0]);
+        }
+
+        async function processFile(file) {
+            const infoEl = document.getElementById('file-info');
+            const resultEl = document.getElementById('file-result');
+            resultEl.classList.add('hidden');
+
+            // Show file info
+            const ext = file.name.split('.').pop().toLowerCase();
+            const isDangerous = DANGEROUS_EXTENSIONS.includes(ext);
+            const sizeStr = file.size > 1024 * 1024 ? (file.size / 1024 / 1024).toFixed(1) + ' MB' : (file.size / 1024).toFixed(1) + ' KB';
+
+            infoEl.classList.remove('hidden');
+            infoEl.innerHTML = `
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 border ${isDangerous ? 'border-red-300 dark:border-red-800' : 'border-gray-100 dark:border-slate-700'}">
+                    <div class="flex items-center gap-4">
+                        <div class="w-14 h-14 ${isDangerous ? 'bg-red-100 dark:bg-red-900/30' : 'bg-emerald-100 dark:bg-emerald-900/30'} rounded-xl flex items-center justify-center shrink-0">
+                            <i class="ph-fill ph-file text-2xl ${isDangerous ? 'text-red-500' : 'text-emerald-500'}"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="font-bold text-sm dark:text-white truncate">${file.name}</p>
+                            <p class="text-xs text-gray-400">${sizeStr} • ${file.type || 'Không xác định'}</p>
+                            ${isDangerous ? '<p class="text-xs text-red-500 font-bold mt-1">🚨 Đuôi file nguy hiểm! (.exe, .bat, .cmd... có thể chứa mã độc)</p>' : ''}
+                        </div>
+                    </div>
+                    <div class="mt-3 flex items-center gap-2">
+                        <div class="animate-spin"><i class="ph-bold ph-circle-notch text-cyan-500"></i></div>
+                        <span class="text-xs text-cyan-600 dark:text-cyan-400 font-bold">Đang tính SHA-256 hash...</span>
+                    </div>
+                </div>
+            `;
+
+            // Compute SHA-256
+            try {
+                const hash = await computeSHA256(file);
+                infoEl.querySelector('.mt-3').innerHTML = `
+                    <div class="bg-gray-50 dark:bg-slate-900 rounded-xl p-3">
+                        <p class="text-[10px] text-gray-400 font-bold mb-1">SHA-256 Hash:</p>
+                        <p class="text-xs font-mono text-cyan-600 dark:text-cyan-400 break-all select-all cursor-pointer" title="Click để copy" onclick="navigator.clipboard.writeText('${hash}'); this.style.color='#22c55e'; setTimeout(()=>this.style.color='',1000)">${hash}</p>
+                    </div>
+                `;
+
+                // Show action buttons
+                resultEl.classList.remove('hidden');
+                const vtFileUrl = `https://www.virustotal.com/gui/file/${hash}`;
+                resultEl.innerHTML = `
+                    <div class="flex flex-wrap gap-3">
+                        <a href="${vtFileUrl}" target="_blank"
+                            class="bg-blue-500 text-white px-5 py-3 rounded-xl font-bold text-sm hover:bg-blue-600 transition-all flex items-center gap-2 shadow-lg">
+                            <i class="ph-bold ph-magnifying-glass"></i> Tra cứu trên VirusTotal
+                        </a>
+                        <a href="https://www.virustotal.com/gui/home/upload" target="_blank"
+                            class="bg-white dark:bg-slate-800 text-gray-600 dark:text-gray-300 px-5 py-3 rounded-xl font-bold text-sm hover:bg-gray-100 dark:hover:bg-slate-700 transition-all border flex items-center gap-2">
+                            <i class="ph-bold ph-upload"></i> Upload file để quét
+                        </a>
+                    </div>
+                    <p class="text-[10px] text-gray-400 mt-3">💡 Nhấn "Tra cứu" để xem file đã được quét chưa. Nếu chưa, nhấn "Upload" để submit lên VirusTotal.</p>
+                `;
+            } catch (err) {
+                infoEl.querySelector('.mt-3').innerHTML = `
+                    <p class="text-xs text-red-500 font-bold">❌ Lỗi tính hash: ${err.message}</p>
+                `;
+            }
+        }
+
+        async function computeSHA256(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const buffer = e.target.result;
+                        const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+                        const hashArray = Array.from(new Uint8Array(hashBuffer));
+                        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+                        resolve(hashHex);
+                    } catch (err) {
+                        reject(err);
+                    }
+                };
+                reader.onerror = () => reject(new Error('Không thể đọc file'));
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        // ============================================================
+        // VIRUSTOTAL API KEY
+        // ============================================================
+        function toggleVTSettings() {
+            const panel = document.getElementById('vt-settings');
+            const caret = document.getElementById('vt-caret');
+            panel.classList.toggle('hidden');
+            caret.style.transform = panel.classList.contains('hidden') ? '' : 'rotate(180deg)';
+            if (!panel.classList.contains('hidden')) updateVTKeyStatus();
+        }
+
+        function saveVTKey() {
+            const key = document.getElementById('vt-api-key').value.trim();
+            if (!key) { alert('Vui lòng nhập API key!'); return; }
+            localStorage.setItem('aitech_vt_key', key);
+            alert('✅ Đã lưu VirusTotal API key!');
+            updateVTKeyStatus();
+        }
+
+        function clearVTKey() {
+            localStorage.removeItem('aitech_vt_key');
+            document.getElementById('vt-api-key').value = '';
+            updateVTKeyStatus();
+        }
+
+        function getVTKey() {
+            return localStorage.getItem('aitech_vt_key');
+        }
+
+        function updateVTKeyStatus() {
+            const statusEl = document.getElementById('vt-key-status');
+            const key = getVTKey();
+            if (key) {
+                statusEl.innerHTML = '<span class="text-green-500">✅ API key đã lưu (••••' + key.slice(-6) + ')</span>';
+            } else {
+                statusEl.innerHTML = '<span class="text-gray-400">Chưa có API key — chỉ mở VirusTotal trên tab mới</span>';
+            }
+        }
+    </script>
+
+</body>
+
+</html>

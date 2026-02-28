@@ -1,0 +1,219 @@
+﻿<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Thời Khóa Biểu — AITECH</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="../aitech.css">
+    <script>tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Quicksand', 'sans-serif'] }, colors: { 'ns-purple': '#7c5cfc', 'ns-purple-light': '#a78bfa', 'ns-purple-soft': '#ede9fe', 'dark-text': '#5A4A4A' } } } }</script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="../firebase-config.js"></script>
+    <script src="../aitech.js"></script>
+    <style>
+        @media print {
+            .no-print {
+                display: none !important
+            }
+
+            body {
+                background: #fff !important
+            }
+
+            .glass-card {
+                background: #fff !important;
+                box-shadow: none !important;
+                border: 1px solid #eee !important
+            }
+        }
+    </style>
+</head>
+
+<body class="relative min-h-screen pb-20 font-sans text-dark-text dark:text-gray-100">
+
+    <div class="blob bg-blue-100 w-[400px] h-[400px] rounded-full top-[-100px] left-[-100px] animate-float"></div>
+
+    <button onclick="toggleTheme()"
+        class="fixed bottom-8 right-8 z-[60] bg-white dark:bg-slate-800 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-yellow-500 border-4 border-white dark:border-slate-700 hover:scale-110 transition-all no-print">
+        <i class="ph-fill ph-sun text-2xl dark:hidden"></i><i
+            class="ph-fill ph-moon text-2xl text-blue-300 hidden dark:block"></i>
+    </button>
+
+    <nav class="p-4 sm:p-6 sticky top-0 z-50 no-print" id="navbar">
+        <div class="max-w-6xl mx-auto flex justify-between items-center glass-card px-6 py-3 rounded-full">
+            <a href="../apps.html"
+                class="flex items-center gap-2 text-gray-500 hover:text-ns-purple transition-colors font-bold group"><i
+                    class="ph-bold ph-arrow-left group-hover:-translate-x-1 transition-transform"></i> Ứng dụng</a>
+            <div class="font-bold text-lg text-blue-500 flex items-center gap-2"><i
+                    class="ph-fill ph-calendar-blank"></i><span class="hidden sm:inline">Thời Khóa Biểu</span></div>
+            <div class="flex gap-2">
+                <button onclick="window.print()"
+                    class="text-xs font-bold text-gray-500 bg-gray-100 dark:bg-slate-700 px-3 py-1 rounded-full hover:bg-ns-purple hover:text-white transition-all"><i
+                        class="ph-bold ph-printer mr-1"></i>In</button>
+                <button onclick="exportTKB()"
+                    class="text-xs font-bold text-ns-purple bg-ns-purple/10 px-3 py-1 rounded-full hover:bg-ns-purple hover:text-white transition-all"><i
+                        class="ph-bold ph-download-simple mr-1"></i>Export</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto px-4 mt-8 space-y-6">
+        <header class="text-center mb-6 no-print">
+            <h1 class="text-3xl font-extrabold dark:text-white">📅 Thời Khóa Biểu <span
+                    class="text-blue-500">THPT</span></h1>
+            <p class="text-gray-500 text-sm mt-2">Click ô trống để thêm môn, click môn để sửa/xóa.</p>
+        </header>
+
+        <!-- Timetable Grid -->
+        <div class="glass-card rounded-[2rem] overflow-x-auto">
+            <table class="w-full min-w-[600px] text-sm">
+                <thead>
+                    <tr class="bg-blue-50 dark:bg-blue-900/20">
+                        <th class="p-3 text-xs font-black text-gray-400 uppercase w-16">Tiết</th>
+                        <th class="p-3 text-xs font-black text-blue-500 uppercase">T2</th>
+                        <th class="p-3 text-xs font-black text-blue-500 uppercase">T3</th>
+                        <th class="p-3 text-xs font-black text-blue-500 uppercase">T4</th>
+                        <th class="p-3 text-xs font-black text-blue-500 uppercase">T5</th>
+                        <th class="p-3 text-xs font-black text-blue-500 uppercase">T6</th>
+                        <th class="p-3 text-xs font-black text-blue-500 uppercase">T7</th>
+                    </tr>
+                </thead>
+                <tbody id="tkb-body"></tbody>
+            </table>
+        </div>
+
+        <!-- Quick Add (no-print) -->
+        <div id="modal-add"
+            class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm no-print">
+            <div class="glass-card w-full max-w-md rounded-[2rem] p-6 sm:p-8">
+                <h3 class="font-bold text-lg dark:text-white mb-4" id="modal-title">Thêm môn học</h3>
+                <div class="space-y-3">
+                    <input type="text" id="m-name" placeholder="Tên môn"
+                        class="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm font-bold focus:outline-none focus:border-ns-purple">
+                    <input type="text" id="m-room" placeholder="Phòng (tùy chọn)"
+                        class="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm font-bold focus:outline-none focus:border-ns-purple">
+                    <input type="text" id="m-teacher" placeholder="Giáo viên (tùy chọn)"
+                        class="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm font-bold focus:outline-none focus:border-ns-purple">
+                    <div class="flex gap-2 flex-wrap"><span
+                            class="text-xs font-bold text-gray-400 w-full mb-1">Màu:</span>
+                        <button onclick="pickColor('#7c5cfc')"
+                            class="w-8 h-8 rounded-lg bg-[#7c5cfc] color-btn border-2 border-transparent"></button>
+                        <button onclick="pickColor('#38bdf8')"
+                            class="w-8 h-8 rounded-lg bg-[#38bdf8] color-btn border-2 border-transparent"></button>
+                        <button onclick="pickColor('#34d399')"
+                            class="w-8 h-8 rounded-lg bg-[#34d399] color-btn border-2 border-transparent"></button>
+                        <button onclick="pickColor('#fb923c')"
+                            class="w-8 h-8 rounded-lg bg-[#fb923c] color-btn border-2 border-transparent"></button>
+                        <button onclick="pickColor('#f472b6')"
+                            class="w-8 h-8 rounded-lg bg-[#f472b6] color-btn border-2 border-transparent"></button>
+                        <button onclick="pickColor('#a78bfa')"
+                            class="w-8 h-8 rounded-lg bg-[#a78bfa] color-btn border-2 border-transparent"></button>
+                        <button onclick="pickColor('#fbbf24')"
+                            class="w-8 h-8 rounded-lg bg-[#fbbf24] color-btn border-2 border-transparent"></button>
+                    </div>
+                </div>
+                <div class="flex gap-3 mt-6">
+                    <button onclick="saveSlot()"
+                        class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2.5 rounded-xl font-bold text-sm transition-all">Lưu</button>
+                    <button id="btn-delete" onclick="deleteSlot()"
+                        class="hidden bg-red-500 hover:bg-red-600 text-white py-2.5 px-4 rounded-xl font-bold text-sm transition-all"><i
+                            class="ph-bold ph-trash"></i></button>
+                    <button onclick="closeModal()"
+                        class="bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-gray-300 py-2.5 px-4 rounded-xl font-bold text-sm transition-all">Hủy</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const DAYS = ['t2', 't3', 't4', 't5', 't6', 't7'];
+        const PERIODS = 5;
+        let tkb = nsLoad('ns_tkb', {});
+        let editDay = '', editPeriod = 0, selectedColor = '#7c5cfc';
+
+        function key(d, p) { return `${d}_${p}` }
+
+        function renderGrid() {
+            const tbody = document.getElementById('tkb-body');
+            tbody.innerHTML = '';
+            for (let p = 1; p <= PERIODS; p++) {
+                let row = `<tr class="${p === 3 ? 'border-t-4 border-dashed border-gray-200 dark:border-slate-700' : ''}">`;
+                row += `<td class="p-2 text-center font-black text-gray-400 text-xs">${p}</td>`;
+                DAYS.forEach(d => {
+                    const slot = tkb[key(d, p)];
+                    if (slot) {
+                        row += `<td class="p-1"><div onclick="openEdit('${d}',${p})" class="p-2 rounded-xl cursor-pointer hover:scale-[1.02] transition-transform text-white text-center" style="background:${slot.color || '#7c5cfc'}">
+              <div class="font-bold text-xs">${slot.name}</div>
+              ${slot.room ? `<div class="text-[9px] opacity-80">${slot.room}</div>` : ''}
+              ${slot.teacher ? `<div class="text-[9px] opacity-70">${slot.teacher}</div>` : ''}
+            </div></td>`;
+                    } else {
+                        row += `<td class="p-1"><div onclick="openAdd('${d}',${p})" class="p-3 rounded-xl border-2 border-dashed border-gray-200 dark:border-slate-700 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-all">
+              <i class="ph-bold ph-plus text-gray-300 text-xs"></i>
+            </div></td>`;
+                    }
+                });
+                row += `</tr>`;
+                tbody.innerHTML += row;
+            }
+        }
+
+        function openAdd(d, p) {
+            editDay = d; editPeriod = p;
+            document.getElementById('modal-title').textContent = 'Thêm môn - ' + DAYS.indexOf(d);
+            document.getElementById('m-name').value = '';
+            document.getElementById('m-room').value = '';
+            document.getElementById('m-teacher').value = '';
+            document.getElementById('btn-delete').classList.add('hidden');
+            selectedColor = '#7c5cfc'; updateColorBtns();
+            document.getElementById('modal-add').classList.remove('hidden');
+            document.getElementById('m-name').focus();
+        }
+
+        function openEdit(d, p) {
+            editDay = d; editPeriod = p;
+            const slot = tkb[key(d, p)];
+            document.getElementById('modal-title').textContent = 'Sửa môn';
+            document.getElementById('m-name').value = slot.name;
+            document.getElementById('m-room').value = slot.room || '';
+            document.getElementById('m-teacher').value = slot.teacher || '';
+            document.getElementById('btn-delete').classList.remove('hidden');
+            selectedColor = slot.color || '#7c5cfc'; updateColorBtns();
+            document.getElementById('modal-add').classList.remove('hidden');
+        }
+
+        function pickColor(c) { selectedColor = c; updateColorBtns() }
+        function updateColorBtns() { document.querySelectorAll('.color-btn').forEach(b => { b.style.borderColor = b.style.backgroundColor === selectedColor || rgbToHex(b.style.backgroundColor) === selectedColor ? 'white' : 'transparent' }) }
+        function rgbToHex(rgb) { if (rgb.startsWith('#')) return rgb; const m = rgb.match(/\d+/g); return m ? '#' + m.slice(0, 3).map(n => (+n).toString(16).padStart(2, '0')).join('') : '' }
+
+        function saveSlot() {
+            const name = document.getElementById('m-name').value.trim();
+            if (!name) { alert('Nhập tên môn'); return }
+            tkb[key(editDay, editPeriod)] = { name, room: document.getElementById('m-room').value.trim(), teacher: document.getElementById('m-teacher').value.trim(), color: selectedColor };
+            save(); closeModal(); renderGrid();
+        }
+
+        function deleteSlot() {
+            delete tkb[key(editDay, editPeriod)];
+            save(); closeModal(); renderGrid();
+        }
+
+        function closeModal() { document.getElementById('modal-add').classList.add('hidden') }
+        function save() { nsStore('ns_tkb', tkb) }
+        function exportTKB() {
+            const blob = new Blob([JSON.stringify(tkb, null, 2)], { type: 'application/json' });
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+            a.download = `aitech-tkb-${new Date().toISOString().slice(0, 10)}.json`; a.click();
+        }
+
+        renderGrid();
+    </script>
+</body>
+
+</html>

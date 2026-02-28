@@ -1,0 +1,246 @@
+﻿<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Study Planner — AITECH</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="../aitech.css">
+    <script>tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Quicksand', 'sans-serif'] }, colors: { 'ns-purple': '#7c5cfc', 'ns-purple-light': '#a78bfa', 'ns-purple-soft': '#ede9fe', 'dark-text': '#5A4A4A' } } } }</script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="../firebase-config.js"></script>
+    <script src="../aitech.js"></script>
+</head>
+
+<body class="relative min-h-screen pb-20 font-sans text-dark-text dark:text-gray-100">
+
+    <div class="blob bg-purple-100 w-[400px] h-[400px] rounded-full top-[-100px] right-[-100px] animate-float"></div>
+
+    <button onclick="toggleTheme()"
+        class="fixed bottom-8 right-8 z-[60] bg-white dark:bg-slate-800 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-yellow-500 border-4 border-white dark:border-slate-700 hover:scale-110 transition-all">
+        <i class="ph-fill ph-sun text-2xl dark:hidden"></i><i
+            class="ph-fill ph-moon text-2xl text-blue-300 hidden dark:block"></i>
+    </button>
+
+    <nav class="p-4 sm:p-6 sticky top-0 z-50" id="navbar">
+        <div class="max-w-6xl mx-auto flex justify-between items-center glass-card px-6 py-3 rounded-full">
+            <a href="../apps.html"
+                class="flex items-center gap-2 text-gray-500 hover:text-ns-purple transition-colors font-bold group"><i
+                    class="ph-bold ph-arrow-left group-hover:-translate-x-1 transition-transform"></i> Ứng dụng</a>
+            <div class="font-bold text-lg text-ns-purple flex items-center gap-2"><i
+                    class="ph-fill ph-note-pencil"></i><span class="hidden sm:inline">Study Planner</span></div>
+            <div></div>
+        </div>
+    </nav>
+
+    <main class="max-w-3xl mx-auto px-4 mt-8 space-y-6">
+        <header class="text-center mb-6">
+            <h1 class="text-3xl font-extrabold dark:text-white">📝 Study <span class="text-ns-purple">Planner</span>
+            </h1>
+            <p class="text-gray-500 text-sm mt-2">Lên kế hoạch SMART, theo dõi deadline, xây dựng thói quen học tập.</p>
+        </header>
+
+        <!-- Add Task -->
+        <div class="glass-card p-6 rounded-[2rem]">
+            <h2 class="font-bold text-base dark:text-white mb-3"><i
+                    class="ph-bold ph-plus-circle text-ns-purple mr-2"></i>Thêm mục tiêu</h2>
+            <div class="space-y-3">
+                <input type="text" id="task-title" placeholder="Mục tiêu (VD: Ôn xong chương 3 Toán)"
+                    class="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm font-bold focus:outline-none focus:border-ns-purple">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-400 block mb-1">Deadline</label>
+                        <input type="date" id="task-deadline"
+                            class="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm font-bold focus:outline-none focus:border-ns-purple">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-400 block mb-1">Ưu tiên</label>
+                        <select id="task-priority"
+                            class="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm font-bold focus:outline-none focus:border-ns-purple">
+                            <option value="high">🔴 Cao</option>
+                            <option value="medium" selected>🟡 Trung bình</option>
+                            <option value="low">🟢 Thấp</option>
+                        </select>
+                    </div>
+                </div>
+                <textarea id="task-detail"
+                    placeholder="Chi tiết SMART (tùy chọn): Cụ thể? Đo lường? Khả thi? Phù hợp? Thời hạn?" rows="2"
+                    class="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm font-bold focus:outline-none focus:border-ns-purple resize-none"></textarea>
+                <button onclick="addTask()"
+                    class="bg-ns-purple hover:bg-ns-purple-light text-white px-6 py-2.5 rounded-xl font-bold text-sm transition-all w-full"><i
+                        class="ph-bold ph-plus mr-1"></i>Thêm mục tiêu</button>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-3 gap-3">
+            <div class="glass-card p-4 rounded-2xl text-center">
+                <p class="text-xs font-bold text-gray-400">Đang làm</p>
+                <p id="stat-active" class="text-2xl font-extrabold text-ns-purple">0</p>
+            </div>
+            <div class="glass-card p-4 rounded-2xl text-center">
+                <p class="text-xs font-bold text-gray-400">Hoàn thành</p>
+                <p id="stat-done" class="text-2xl font-extrabold text-green-500">0</p>
+            </div>
+            <div class="glass-card p-4 rounded-2xl text-center">
+                <p class="text-xs font-bold text-gray-400">Quá hạn</p>
+                <p id="stat-overdue" class="text-2xl font-extrabold text-red-500">0</p>
+            </div>
+        </div>
+
+        <!-- Filter -->
+        <div class="flex gap-2 flex-wrap">
+            <button onclick="setFilter('all')"
+                class="planner-filter active bg-ns-purple text-white px-4 py-1.5 rounded-full text-xs font-bold transition-all">Tất
+                cả</button>
+            <button onclick="setFilter('active')"
+                class="planner-filter bg-white dark:bg-slate-700 px-4 py-1.5 rounded-full text-xs font-bold hover:bg-ns-purple hover:text-white transition-all">Đang
+                làm</button>
+            <button onclick="setFilter('done')"
+                class="planner-filter bg-white dark:bg-slate-700 px-4 py-1.5 rounded-full text-xs font-bold hover:bg-ns-purple hover:text-white transition-all">Hoàn
+                thành</button>
+            <button onclick="setFilter('overdue')"
+                class="planner-filter bg-white dark:bg-slate-700 px-4 py-1.5 rounded-full text-xs font-bold hover:bg-ns-purple hover:text-white transition-all">Quá
+                hạn</button>
+        </div>
+
+        <!-- Tasks List -->
+        <div id="tasks-list" class="space-y-3"></div>
+
+        <!-- Weekly Review Template -->
+        <div class="glass-card p-6 rounded-[2rem] border-2 border-ns-purple/10">
+            <h3 class="font-bold text-base dark:text-white mb-3"><i
+                    class="ph-bold ph-calendar-check text-ns-purple mr-2"></i>Mẫu Review Tuần</h3>
+            <div class="text-sm text-gray-500 space-y-2">
+                <p>📌 <strong>Tuần qua mình đã hoàn thành:</strong> [ghi ra]</p>
+                <p>📌 <strong>Khó khăn gặp phải:</strong> [ghi ra]</p>
+                <p>📌 <strong>Tuần tới mình sẽ:</strong> [ghi ra]</p>
+                <p>📌 <strong>1 điều mình tự hào:</strong> [ghi ra]</p>
+            </div>
+            <p class="text-[10px] text-ns-purple font-bold mt-3">💡 Viết review cuối tuần giúp củng cố siêu nhận thức
+                (metacognition) — hiểu cách mình học.</p>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex gap-2 justify-center">
+            <button onclick="clearDone()"
+                class="text-xs font-bold text-gray-500 bg-gray-100 dark:bg-slate-700 px-4 py-2 rounded-full hover:bg-red-500 hover:text-white transition-all"><i
+                    class="ph-bold ph-trash mr-1"></i>Xóa đã hoàn thành</button>
+        </div>
+    </main>
+
+    <script>
+        const PRIORITY_MAP = { high: { label: '🔴 Cao', sort: 0 }, medium: { label: '🟡 TB', sort: 1 }, low: { label: '🟢 Thấp', sort: 2 } };
+        let tasks = nsLoad('ns_planner', []);
+        let filter = 'all';
+        const today = new Date().toISOString().slice(0, 10);
+
+        function save() { nsStore('ns_planner', tasks) }
+
+        function addTask() {
+            const title = document.getElementById('task-title').value.trim();
+            if (!title) { alert('Nhập mục tiêu'); return }
+            tasks.push({
+                id: Date.now(),
+                title,
+                deadline: document.getElementById('task-deadline').value || '',
+                priority: document.getElementById('task-priority').value,
+                detail: document.getElementById('task-detail').value.trim(),
+                done: false,
+                createdAt: today
+            });
+            save(); render();
+            document.getElementById('task-title').value = '';
+            document.getElementById('task-detail').value = '';
+        }
+
+        function toggleDone(id) {
+            const t = tasks.find(t => t.id === id);
+            if (t) t.done = !t.done;
+            save(); render();
+        }
+
+        function deleteTask(id) {
+            tasks = tasks.filter(t => t.id !== id); save(); render();
+        }
+
+        function clearDone() {
+            if (!confirm('Xóa tất cả mục tiêu đã hoàn thành?')) return;
+            tasks = tasks.filter(t => !t.done); save(); render();
+        }
+
+        function setFilter(f) {
+            filter = f;
+            document.querySelectorAll('.planner-filter').forEach(b => {
+                b.classList.remove('active', 'bg-ns-purple', 'text-white');
+                b.classList.add('bg-white', 'dark:bg-slate-700');
+            });
+            event.currentTarget.classList.add('active', 'bg-ns-purple', 'text-white');
+            event.currentTarget.classList.remove('bg-white', 'dark:bg-slate-700');
+            render();
+        }
+
+        function render() {
+            const active = tasks.filter(t => !t.done);
+            const done = tasks.filter(t => t.done);
+            const overdue = active.filter(t => t.deadline && t.deadline < today);
+
+            document.getElementById('stat-active').textContent = active.length;
+            document.getElementById('stat-done').textContent = done.length;
+            document.getElementById('stat-overdue').textContent = overdue.length;
+
+            let filtered = tasks;
+            if (filter === 'active') filtered = active;
+            else if (filter === 'done') filtered = done;
+            else if (filter === 'overdue') filtered = overdue;
+
+            // Sort: undone first, then by priority, then by deadline
+            filtered = [...filtered].sort((a, b) => {
+                if (a.done !== b.done) return a.done ? 1 : -1;
+                if (PRIORITY_MAP[a.priority].sort !== PRIORITY_MAP[b.priority].sort) return PRIORITY_MAP[a.priority].sort - PRIORITY_MAP[b.priority].sort;
+                if (a.deadline && b.deadline) return a.deadline.localeCompare(b.deadline);
+                return 0;
+            });
+
+            const list = document.getElementById('tasks-list');
+            if (filtered.length === 0) {
+                list.innerHTML = '<p class="text-center text-gray-400 text-sm py-8">Chưa có mục tiêu nào.</p>';
+                return;
+            }
+
+            list.innerHTML = filtered.map(t => {
+                const isOverdue = !t.done && t.deadline && t.deadline < today;
+                const daysLeft = t.deadline ? Math.ceil((new Date(t.deadline + 'T00:00') - new Date(today + 'T00:00')) / 86400000) : null;
+                return `<div class="glass-card p-4 rounded-2xl flex items-start gap-3 ${t.done ? 'opacity-60' : ''}${isOverdue ? ' border-2 border-red-300 dark:border-red-700' : ''}">
+          <button onclick="toggleDone(${t.id})" class="mt-1 w-6 h-6 rounded-lg border-2 ${t.done ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300 dark:border-slate-600 hover:border-ns-purple'} flex items-center justify-center shrink-0 transition-all">
+            ${t.done ? '<i class="ph-bold ph-check text-xs"></i>' : ''}
+          </button>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="font-bold text-sm dark:text-white ${t.done ? 'line-through' : ''}">${t.title}</span>
+              <span class="text-[9px] font-black">${PRIORITY_MAP[t.priority].label}</span>
+            </div>
+            ${t.detail ? `<p class="text-xs text-gray-400 mt-1">${t.detail}</p>` : ''}
+            ${t.deadline ? `<div class="mt-1 flex items-center gap-2">
+              <span class="text-[10px] font-bold ${isOverdue ? 'text-red-500' : daysLeft <= 2 ? 'text-orange-500' : 'text-gray-400'}">
+                <i class="ph-bold ph-calendar mr-0.5"></i>${t.deadline}
+                ${isOverdue ? ` (quá ${-daysLeft} ngày!)` : daysLeft !== null ? ` (còn ${daysLeft} ngày)` : ''}
+              </span>
+            </div>`: ''}
+          </div>
+          <button onclick="deleteTask(${t.id})" class="text-gray-300 hover:text-red-500 transition-colors shrink-0"><i class="ph-bold ph-trash text-sm"></i></button>
+        </div>`;
+            }).join('');
+        }
+
+        render();
+    </script>
+</body>
+
+</html>
