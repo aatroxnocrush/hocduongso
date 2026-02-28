@@ -1,4 +1,6 @@
-﻿# 📖 Hướng Dẫn Sử Dụng AITECH
+# 📖 AITECH — Học đường số dành cho học sinh THPT
+
+🌐 **Website:** [https://aatroxnocrush.github.io/hocduongso/](https://aatroxnocrush.github.io/hocduongso/)
 
 ---
 
@@ -45,7 +47,9 @@
 > Dành cho người dùng truy cập qua link website đã deploy.
 
 ### Truy cập
-Mở link website được cung cấp bằng trình duyệt (Chrome, Edge, Firefox, Safari).
+👉 **[https://aatroxnocrush.github.io/hocduongso/](https://aatroxnocrush.github.io/hocduongso/)**
+
+Mở link trên bằng trình duyệt (Chrome, Edge, Firefox, Safari).
 
 ### Sử dụng các tính năng
 
@@ -75,7 +79,7 @@ Mở link website được cung cấp bằng trình duyệt (Chrome, Edge, Firef
 4. Dán key vào ô → nhấn "Lưu"
 5. API key Gemini **hoàn toàn miễn phí** (15 req/phút)
 
-#### � Kiểm tra an toàn mạng
+#### 🔒 Kiểm tra an toàn mạng
 1. Vào **Ứng dụng** → **Kiểm Tra An Toàn Mạng**
 2. **Kiểm tra URL**: Nhập link → nhận điểm an toàn + cảnh báo chi tiết
 3. **Quét file**: Kéo thả file → tính SHA-256 hash → tra cứu trên VirusTotal
@@ -88,7 +92,7 @@ Mở link website được cung cấp bằng trình duyệt (Chrome, Edge, Firef
 4. Mô phỏng tin nhắn lừa đảo
 5. AI phân tích tin nhắn/email nghi ngờ
 
-#### �💰 Quản lý chi tiêu
+#### 💰 Quản lý chi tiêu
 1. Vào **Ứng dụng** → **Chi tiêu**
 2. Nhập số tiền, chọn danh mục, ngày, ghi chú → nhấn **Thêm**
 3. Xem biểu đồ tròn (theo danh mục) và biểu đồ cột (7 ngày)
@@ -143,8 +147,8 @@ Mở link website được cung cấp bằng trình duyệt (Chrome, Edge, Firef
 
 ### Bước 1: Clone mã nguồn
 ```bash
-git clone https://github.com/<username>/aitech.git
-cd aitech
+git clone https://github.com/aatroxnocrush/hocduongso.git
+cd hocduongso
 ```
 
 ### Bước 2: Mở trang web
@@ -154,13 +158,82 @@ Hoặc dùng Live Server (nếu dùng VS Code):
 1. Cài extension **Live Server**
 2. Chuột phải `index.html` → **Open with Live Server**
 
-### Bước 3: Cấu hình Firebase (tuỳ chọn)
-1. Vào [console.firebase.google.com](https://console.firebase.google.com) → tạo project
-2. Register web app → copy config
-3. Mở `firebase-config.js` → thay `FIREBASE_CONFIG` bằng config thật
-4. Bật **Google sign-in** trong Authentication
-5. Tạo **Firestore Database** (test mode)
-6. Thêm domain vào **Authorized domains**
+### Bước 3: Cấu hình Firebase
+
+> ⚠️ **Bắt buộc** nếu muốn dùng tính năng **Đăng nhập Google** và **lưu user lên cloud**.
+
+#### 3.1 — Tạo Firebase Project
+1. Vào 👉 [console.firebase.google.com](https://console.firebase.google.com)
+2. Nhấn **"Add project"** (hoặc "Thêm dự án")
+3. Đặt tên project (ví dụ: `aitech-hocduongso`)
+4. Tắt Google Analytics (không cần) → nhấn **"Create project"**
+5. Đợi tạo xong → nhấn **"Continue"**
+
+#### 3.2 — Đăng ký Web App & lấy Config
+1. Trong Firebase Console, nhấn biểu tượng **</>** (Web) trên trang chủ project
+2. Đặt nickname app (ví dụ: `AITECH Web`) → **KHÔNG** cần tick Firebase Hosting
+3. Nhấn **"Register app"**
+4. Sẽ hiện ra đoạn code chứa `firebaseConfig` — **copy 6 giá trị** sau:
+
+```javascript
+const firebaseConfig = {
+  apiKey: "AIzaSy...",           // ← copy dòng này
+  authDomain: "abc.firebaseapp.com",
+  projectId: "abc",
+  storageBucket: "abc.appspot.com",
+  messagingSenderId: "123456",
+  appId: "1:123456:web:abc123"
+};
+```
+
+5. Mở file `firebase-config.js` trong dự án → thay các giá trị `YOUR_...` bằng config vừa copy:
+
+```javascript
+const FIREBASE_CONFIG = {
+    apiKey: "AIzaSy...",                    // ← thay vào đây
+    authDomain: "abc.firebaseapp.com",      // ← thay vào đây
+    projectId: "abc",                       // ← thay vào đây
+    storageBucket: "abc.appspot.com",       // ← thay vào đây
+    messagingSenderId: "123456",            // ← thay vào đây
+    appId: "1:123456:web:abc123"            // ← thay vào đây
+};
+```
+
+#### 3.3 — Bật Google Sign-In
+1. Trong Firebase Console → menu trái chọn **Authentication**
+2. Tab **Sign-in method** → nhấn **"Add new provider"**
+3. Chọn **Google** → bật **Enable**
+4. Chọn **Project support email** (email Google của bạn)
+5. Nhấn **Save**
+
+#### 3.4 — Thêm domain được phép đăng nhập
+1. Vẫn trong **Authentication** → tab **Settings**
+2. Mục **Authorized domains** → nhấn **"Add domain"**
+3. Thêm domain GitHub Pages của bạn:
+   ```
+   aatroxnocrush.github.io
+   ```
+4. Nếu chạy local, thêm thêm `localhost`
+
+#### 3.5 — Tạo Firestore Database
+1. Menu trái → chọn **Firestore Database**
+2. Nhấn **"Create database"**
+3. Chọn location (ví dụ: `asia-southeast1` cho Việt Nam)
+4. Chọn **"Start in test mode"** → nhấn **Create**
+
+> 💡 **Test mode** cho phép đọc/ghi tự do trong 30 ngày. Sau đó nên đổi sang rules bảo mật:
+> ```
+> rules_version = '2';
+> service cloud.firestore {
+>   match /databases/{database}/documents {
+>     match /users/{userId} {
+>       allow read, write: if request.auth != null && request.auth.uid == userId;
+>     }
+>   }
+> }
+> ```
+
+#### ✅ Xong! Deploy lại và test đăng nhập Google.
 
 ### Bước 4: Cấu hình API key (tùy chọn)
 Mở `aitech.js`, tìm dòng ~274:
@@ -192,7 +265,7 @@ Sau đó vào **Settings** → **Pages** → chọn branch `main` → **Save**.
 
 ### Cấu trúc dự án
 ```
-aitech/
+hocduongso/
 ├── index.html               ← Trang chủ + Chatbot + Đăng nhập
 ├── thuctrang.html            ← Thực trạng
 ├── giaiphap.html             ← Giải pháp & Phương pháp
@@ -241,4 +314,4 @@ aitech/
 
 ---
 
-> **AITECH** © 2026 — Học đường số dành cho học sinh THPT Việt Nam 💜
+> **AITECH** © 2026 — Trần Đình Mạnh Phong — Học đường số dành cho học sinh THPT Việt Nam 💜
