@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Chặn Game & Web Xấu — AITECH</title>
+    <meta name="description"
+        content="AITECH Blocker — công cụ chặn game và web không lành mạnh, đổi DNS an toàn cho học sinh THPT.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="../aitech.css">
+    <script>tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Quicksand', 'sans-serif'] }, colors: { 'ns-purple': '#7c5cfc', 'ns-purple-light': '#a78bfa', 'ns-purple-soft': '#ede9fe', 'dark-text': '#5A4A4A' } } } }</script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="../firebase-config.js"></script>
+    <script src="../aitech.js"></script>
+</head>
+
+<body class="relative min-h-screen font-sans text-dark-text dark:text-gray-100 pb-20">
+
+    <div class="blob bg-purple-100 w-[500px] h-[500px] rounded-full top-[-100px] left-[-150px] animate-float"></div>
+    <div class="blob bg-green-100 w-[400px] h-[400px] rounded-full bottom-20 right-[-100px]"></div>
+
+    <button onclick="toggleTheme()"
+        class="fixed bottom-8 right-8 z-[60] bg-white dark:bg-slate-800 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-yellow-500 border-4 border-white dark:border-slate-700 hover:scale-110 transition-all">
+        <i class="ph-fill ph-sun text-2xl dark:hidden"></i><i
+            class="ph-fill ph-moon text-2xl text-blue-300 hidden dark:block"></i>
+    </button>
+
+    <nav class="p-4 sm:p-6 sticky top-0 z-50" id="navbar">
+        <div class="max-w-6xl mx-auto flex justify-between items-center glass-card px-6 py-3 rounded-full">
+            <a href="../apps.html"
+                class="flex items-center gap-2 text-gray-500 hover:text-ns-purple transition-colors font-bold group"><i
+                    class="ph-bold ph-arrow-left group-hover:-translate-x-1 transition-transform"></i> Ứng dụng</a>
+            <div class="font-bold text-lg text-ns-purple flex items-center gap-2"><i
+                    class="ph-fill ph-shield-check"></i><span class="hidden sm:inline">Chặn Web</span></div>
+            <a href="../index.html"
+                class="text-sm font-bold text-gray-500 hover:text-ns-purple transition-colors hidden md:block">Trang chủ
+                <i class="ph-bold ph-arrow-right"></i></a>
+        </div>
+    </nav>
+
+    <header class="text-center px-4 mb-12 mt-8 reveal">
+        <span
+            class="inline-block bg-white dark:bg-slate-800 text-ns-purple text-[10px] font-black px-4 py-1.5 rounded-full shadow-sm mb-4 uppercase tracking-widest border border-ns-purple/10">AIO
+            Tool</span>
+        <h1 class="text-3xl md:text-5xl font-extrabold dark:text-white mb-4 leading-tight">Chặn Game & <span
+                class="text-ns-purple italic">Web Xấu</span> 🛡️</h1>
+        <p class="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">Công cụ AIO chặn game, web cờ bạc, web 18+, đổi
+            DNS an toàn — chạy bằng 1 lệnh duy nhất.</p>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4">
+
+        <!-- DOWNLOAD SECTION -->
+        <section
+            class="glass-card rounded-[2rem] p-6 sm:p-10 mb-10 bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/10 dark:to-slate-900 border-2 border-ns-purple/20">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-12 h-12 bg-ns-purple/10 rounded-xl flex items-center justify-center shrink-0">
+                    <i class="ph-fill ph-download-simple text-2xl text-ns-purple"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold dark:text-white">Tải AITECH Blocker</h2>
+                    <p class="text-xs text-gray-500">Tải về chuột phải "Run as admin" bật chặn!</p>
+                </div>
+            </div>
+
+            <div class="text-center mb-6">
+                <a href="https://drive.google.com/file/d/1wRXFvz-bfEHmKZ03IGtR0QcYS7H7k1ht/view?usp=sharing"
+                    target="_blank"
+                    class="inline-flex items-center gap-3 hero-gradient text-white px-10 py-4 rounded-2xl font-bold shadow-2xl hover:scale-105 transition-all text-lg">
+                    <i class="ph-fill ph-download-simple text-2xl"></i> Tải AITECH Blocker
+                </a>
+                <p class="text-xs text-gray-400 mt-3"> File .cmd chạy trực tiếp, không cần cài đặt</p>
+            </div>
+        </section>
+
+        <!-- HOW TO -->
+        <section class="glass-card rounded-[2rem] p-6 sm:p-10 mb-10">
+            <h2 class="text-xl font-bold dark:text-white mb-6">📖 Hướng Dẫn 3 Bước</h2>
+            <div class="space-y-6">
+                <div class="flex gap-4 items-start">
+                    <div
+                        class="w-10 h-10 bg-ns-purple text-white rounded-xl flex items-center justify-center font-bold shrink-0">
+                        1</div>
+                    <div>
+                        <h3 class="font-bold dark:text-white mb-1">Tải AITECH Blocker</h3>
+                        <p class="text-sm text-gray-500">Nhấn nút <strong>"Tải AITECH Blocker"</strong> ở trên →
+                            tải file <code
+                                class="bg-ns-purple/10 text-ns-purple px-2 py-0.5 rounded text-xs">.cmd</code> về máy.
+                        </p>
+                    </div>
+                </div>
+                <div class="flex gap-4 items-start">
+                    <div
+                        class="w-10 h-10 bg-ns-purple text-white rounded-xl flex items-center justify-center font-bold shrink-0">
+                        2</div>
+                    <div>
+                        <h3 class="font-bold dark:text-white mb-1">Chạy với quyền Admin</h3>
+                        <p class="text-sm text-gray-500">Chuột phải vào file đã tải → chọn <strong>"Run as
+                                administrator"</strong>.
+                            Tool sẽ hiện menu trong CMD.</p>
+                    </div>
+                </div>
+                <div class="flex gap-4 items-start">
+                    <div
+                        class="w-10 h-10 bg-ns-purple text-white rounded-xl flex items-center justify-center font-bold shrink-0">
+                        3</div>
+                    <div>
+                        <h3 class="font-bold dark:text-white mb-1">Chọn tính năng</h3>
+                        <p class="text-sm text-gray-500">Nhấn số tương ứng trong menu: <strong>[1]</strong> Bật/tắt chặn
+                            web, <strong>[3]</strong> Đổi DNS an toàn, v.v.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FEATURES -->
+        <section class="glass-card rounded-[2rem] p-6 sm:p-10 mb-10">
+            <h2 class="text-xl font-bold dark:text-white mb-6">⚡ Tính Năng</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div
+                    class="bg-green-50 dark:bg-green-900/10 p-4 rounded-2xl border border-green-100 dark:border-green-900/30">
+                    <h3 class="font-bold text-green-600 text-sm mb-2">🚫 Chặn Web (Hosts File)</h3>
+                    <p class="text-xs text-gray-500">Bật/tắt chặn 50+ domain game, mạng xã hội, cờ bạc, web 18+ chỉ với
+                        1 phím.</p>
+                </div>
+                <div
+                    class="bg-blue-50 dark:bg-blue-900/10 p-4 rounded-2xl border border-blue-100 dark:border-blue-900/30">
+                    <h3 class="font-bold text-blue-600 text-sm mb-2">🌐 Đổi DNS An Toàn</h3>
+                    <p class="text-xs text-gray-500">Chọn OpenDNS FamilyShield, CleanBrowsing, Cloudflare Family hoặc
+                        Google DNS.</p>
+                </div>
+                <div
+                    class="bg-purple-50 dark:bg-purple-900/10 p-4 rounded-2xl border border-purple-100 dark:border-purple-900/30">
+                    <h3 class="font-bold text-purple-600 text-sm mb-2">👁️ Xem File Hosts</h3>
+                    <p class="text-xs text-gray-500">Xem trực tiếp nội dung file hosts hiện tại ngay trong tool.</p>
+                </div>
+                <div
+                    class="bg-orange-50 dark:bg-orange-900/10 p-4 rounded-2xl border border-orange-100 dark:border-orange-900/30">
+                    <h3 class="font-bold text-orange-600 text-sm mb-2">🔄 Dễ Gỡ Bỏ</h3>
+                    <p class="text-xs text-gray-500">Mở lại tool → chọn [1] để tắt chặn → hoàn tất. Không lo mất dữ
+                        liệu.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- WHAT IT BLOCKS -->
+        <section class="glass-card rounded-[2rem] p-6 sm:p-10 mb-10">
+            <h2 class="text-xl font-bold dark:text-white mb-6">🚫 Danh Sách Web Bị Chặn</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="p-4 rounded-2xl bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30">
+                    <h3 class="font-bold text-red-600 text-sm mb-2">🎮 Game Online</h3>
+                    <p class="text-xs text-gray-500">Garena, PUBG, Roblox, Minecraft, Genshin Impact, Free Fire, Liên
+                        Quân, Steam, Epic Games, Fortnite, Valorant, LoL, Y8, Poki, Friv...</p>
+                </div>
+                <div
+                    class="p-4 rounded-2xl bg-orange-50 dark:bg-orange-900/10 border border-orange-100 dark:border-orange-900/30">
+                    <h3 class="font-bold text-orange-600 text-sm mb-2">📱 Mạng Xã Hội</h3>
+                    <p class="text-xs text-gray-500">TikTok, Facebook, Instagram, Twitter/X, Reddit, 9GAG, Twitch...</p>
+                </div>
+                <div
+                    class="p-4 rounded-2xl bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-100 dark:border-yellow-900/30">
+                    <h3 class="font-bold text-yellow-700 text-sm mb-2">🎰 Cờ Bạc Online</h3>
+                    <p class="text-xs text-gray-500">188bet, Fun88, W88, FB88, M88, Bong88, Sbobet, Bet365, VN88,
+                        12bet...</p>
+                </div>
+                <div
+                    class="p-4 rounded-2xl bg-purple-50 dark:bg-purple-900/10 border border-purple-100 dark:border-purple-900/30">
+                    <h3 class="font-bold text-purple-600 text-sm mb-2">🔞 Web Người Lớn</h3>
+                    <p class="text-xs text-gray-500">Chặn các trang web nội dung không phù hợp với học sinh.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- FAQ -->
+        <section class="glass-card rounded-[2rem] p-6 sm:p-10 mb-10">
+            <h2 class="text-xl font-bold dark:text-white mb-6">❓ Câu Hỏi Thường Gặp</h2>
+            <div class="space-y-4">
+                <details class="bg-gray-50 dark:bg-slate-800/50 rounded-xl p-4" open>
+                    <summary class="font-bold text-sm cursor-pointer dark:text-white">Muốn gỡ chặn thì làm sao?
+                    </summary>
+                    <p class="text-sm text-gray-500 mt-2">Mở lại tool <code
+                            class="bg-ns-purple/10 text-ns-purple px-2 py-0.5 rounded text-xs">AITECH Blocker</code> →
+                        chọn <strong>[1]</strong> để tắt chặn. Tool sẽ tự dọn sạch file hosts.</p>
+                </details>
+                <details class="bg-gray-50 dark:bg-slate-800/50 rounded-xl p-4">
+                    <summary class="font-bold text-sm cursor-pointer dark:text-white">Tại sao cần quyền Administrator?
+                    </summary>
+                    <p class="text-sm text-gray-500 mt-2">Vì file <code
+                            class="bg-ns-purple/10 text-ns-purple px-2 py-0.5 rounded text-xs">hosts</code> và cài đặt
+                        DNS nằm ở cấp hệ thống, Windows yêu cầu quyền Admin để sửa.</p>
+                </details>
+                <details class="bg-gray-50 dark:bg-slate-800/50 rounded-xl p-4">
+                    <summary class="font-bold text-sm cursor-pointer dark:text-white">Có lưu gì trên máy không?
+                    </summary>
+                    <p class="text-sm text-gray-500 mt-2">Không. Tool chạy trực tiếp từ internet, không cài đặt, không
+                        lưu file. Chỉ sửa file hosts và DNS settings.</p>
+                </details>
+                <details class="bg-gray-50 dark:bg-slate-800/50 rounded-xl p-4">
+                    <summary class="font-bold text-sm cursor-pointer dark:text-white">An toàn không?</summary>
+                    <p class="text-sm text-gray-500 mt-2">Mã nguồn mở 100% trên GitHub. Bạn có thể đọc toàn bộ code
+                        trước khi chạy. Tool chỉ thêm/xóa dòng trong file hosts.</p>
+                </details>
+            </div>
+        </section>
+
+        <!-- FOCUS TIMER -->
+        <section class="glass-card rounded-[2rem] p-6 sm:p-10 mb-10 text-center">
+            <h2 class="text-xl font-bold dark:text-white mb-4">⏱️ Chế Độ Tập Trung</h2>
+            <p class="text-sm text-gray-500 mb-6">Đặt thời gian tập trung học tập — không lướt web!</p>
+
+            <div class="inline-block bg-white dark:bg-slate-800 rounded-3xl p-8 shadow-xl mb-6">
+                <div id="focus-display" class="text-6xl font-bold text-ns-purple mb-4 font-mono">25:00</div>
+                <div class="flex gap-3 justify-center mb-4">
+                    <button onclick="setFocusTime(15)"
+                        class="bg-gray-100 dark:bg-slate-700 px-3 py-1 rounded-lg text-xs font-bold hover:bg-ns-purple hover:text-white transition-all">15p</button>
+                    <button onclick="setFocusTime(25)"
+                        class="bg-ns-purple text-white px-3 py-1 rounded-lg text-xs font-bold">25p</button>
+                    <button onclick="setFocusTime(45)"
+                        class="bg-gray-100 dark:bg-slate-700 px-3 py-1 rounded-lg text-xs font-bold hover:bg-ns-purple hover:text-white transition-all">45p</button>
+                    <button onclick="setFocusTime(60)"
+                        class="bg-gray-100 dark:bg-slate-700 px-3 py-1 rounded-lg text-xs font-bold hover:bg-ns-purple hover:text-white transition-all">60p</button>
+                </div>
+                <button onclick="toggleFocus()" id="focus-btn"
+                    class="hero-gradient text-white px-10 py-3 rounded-xl font-bold shadow-xl hover:scale-105 transition-all text-lg">
+                    ▶️ Bắt đầu tập trung
+                </button>
+            </div>
+
+            <div id="focus-message" class="hidden bg-green-50 dark:bg-green-900/20 rounded-2xl p-4 max-w-md mx-auto">
+                <p class="text-green-600 dark:text-green-400 font-bold">🎯 Đang tập trung! Hãy học thật tốt nhé!</p>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="text-center mt-16 text-gray-400 dark:text-gray-600 text-sm pb-10">
+        <div class="flex justify-center items-center gap-2 mb-4"><i
+                class="ph-fill ph-sparkle text-2xl text-ns-purple"></i><span
+                class="font-bold text-slate-800 dark:text-white uppercase tracking-wider">AITECH</span></div>
+        <p>Dành cho học sinh THPT Việt Nam — 2026</p>
+    </footer>
+
+    <script>
+
+
+        let focusMinutes = 25, focusSeconds = 0, focusInterval = null, focusRunning = false;
+        function setFocusTime(m) { if (!focusRunning) { focusMinutes = m; focusSeconds = 0; updateFocusDisplay(); } }
+        function updateFocusDisplay() { document.getElementById('focus-display').textContent = `${String(focusMinutes).padStart(2, '0')}:${String(focusSeconds).padStart(2, '0')}`; }
+        function toggleFocus() { focusRunning ? stopFocus() : startFocus(); }
+        function startFocus() {
+            focusRunning = true;
+            document.getElementById('focus-btn').innerHTML = '⏸️ Dừng';
+            document.getElementById('focus-btn').classList.add('!bg-red-500');
+            document.getElementById('focus-message').classList.remove('hidden');
+            focusInterval = setInterval(() => {
+                if (focusSeconds === 0) { if (focusMinutes === 0) { stopFocus(); alert('⏰ Hết giờ! Nghỉ 5 phút rồi học tiếp nhé! 🎉'); focusMinutes = 25; updateFocusDisplay(); return; } focusMinutes--; focusSeconds = 59; } else { focusSeconds--; }
+                updateFocusDisplay();
+            }, 1000);
+        }
+        function stopFocus() {
+            focusRunning = false; clearInterval(focusInterval);
+            document.getElementById('focus-btn').innerHTML = '▶️ Bắt đầu tập trung';
+            document.getElementById('focus-btn').classList.remove('!bg-red-500');
+            document.getElementById('focus-message').classList.add('hidden');
+        }
+        updateFocusDisplay();
+    </script>
+
+</body>
+
+</html>
