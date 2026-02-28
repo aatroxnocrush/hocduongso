@@ -15,12 +15,12 @@
 
 // ⬇️ THAY FIREBASE CONFIG CỦA BẠN VÀO ĐÂY
 const FIREBASE_CONFIG = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyC6OG6p_cYjZ-shAiNn0yzfzF0gvTmb-9Q",
+    authDomain: "hocduongso-aitech.firebaseapp.com",
+    projectId: "hocduongso-aitech",
+    storageBucket: "hocduongso-aitech.firebasestorage.app",
+    messagingSenderId: "361173889088",
+    appId: "1:361173889088:web:cd588888f7dd2e55ee2fa5"
 };
 // ⬆️ Lấy config tại: Firebase Console → Project Settings → General → Web app
 
@@ -197,3 +197,4 @@ document.addEventListener('DOMContentLoaded', () => {
         aitechInitFirebase();
     }, 100);
 });
+
